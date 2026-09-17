@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>LeadChat Widget Test</title>
+</head>
+<body>
+<h1>挂件测试页</h1>
+<p>页面右下角应出现聊天浮动按钮。</p>
+<!-- 演示页不指定 data-theme/data-icon 等，跟随管理后台配置；接入方可用 data-theme 强制指定主题 -->
+<!-- Embed API：脚本加载前可用队列方式初始化（assistant 省略=默认助手；context 为宿主业务上下文）
+<script>
+  window.LeadChat = window.LeadChat || [];
+  window.LeadChat.push(["init", {
+    assistant: "support",
+    context: { page: "demo", plan: "free" }
+  }]);
+</script>
+-->
+<script src="leadchat.min.js?v=0.5.2"></script>
+</body>
+</html>

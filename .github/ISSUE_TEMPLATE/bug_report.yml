@@ -1,0 +1,81 @@
+name: Bug 反馈
+description: 报告一个可复现的问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量填写完整信息，模糊的问题难以排查。
+        提问前请先搜索已有 Issue，并确认使用的是最新版本。
+
+  - type: dropdown
+    id: version
+    attributes:
+      label: LeadChat 版本
+      description: "可在管理后台右上角版本标签或 /health 接口查看"
+      options:
+        - "0.5.2"
+        - "0.5.1"
+        - "0.5.0"
+        - "0.4.0"
+        - "0.3.0"
+        - "0.2.x（旧版本，请先尝试升级）"
+        - "源码自行构建（main / 其他分支）"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: 部署方式
+      options:
+        - Docker Compose
+        - docker run
+        - 本地源码运行（uvicorn）
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+      description: "例如：Ubuntu 22.04 + Docker 24 / Windows 11 + Python 3.11；浏览器与版本（挂件问题必填）"
+      placeholder: "Ubuntu 22.04, Docker 24.0；Chrome 128"
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题描述与复现步骤
+      description: "请按 1. 2. 3. 列出复现步骤，并说明实际发生了什么"
+      placeholder: |
+        1. 打开后台「知识库」
+        2. 上传 xxx.pdf
+        3. 等待约 30 秒后……
+        实际行为：页面提示「网络异常」
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      placeholder: 文档应解析成功并出现在文档列表中
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志 / 截图
+      description: "建议粘贴 `docker compose logs --tail=100` 的报错，或挂件/后台截图（注意隐去 API Key）"
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前检查
+      options:
+        - label: 我已搜索过现有 Issue，没有重复报告
+          required: true
+        - label: 我已确认日志和截图中不包含 API Key、密码等敏感信息
+          required: true

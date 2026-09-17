@@ -1,0 +1,20 @@
+services:
+  leadchat:
+    image: leadchat:0.5.2
+    build:
+      context: .
+      args:
+        APP_VERSION: "0.5.2"
+    container_name: leadchat
+    ports:
+      - "11999:11999"
+    volumes:
+      - ./data:/app/backend/data
+      # 持久化 ChromaDB embedding 模型缓存（79MB），容器重建后无需重新下载
+      - chroma_cache:/root/.cache/chroma
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  chroma_cache:

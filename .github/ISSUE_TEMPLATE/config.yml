@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用讨论 / 问答
+    url: https://github.com/XingTuLink/LeadChat/discussions
+    about: 使用问题、部署求助、经验交流请在 Discussions 中发起
+  - name: 文档
+    url: https://github.com/XingTuLink/LeadChat#快速开始
+    about: 提 Issue 前请先查阅 README 与 docs/ 下的部署、配置、API 文档

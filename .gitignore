@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 环境变量与敏感信息
+.env
+
+# 运行时数据
+data/
+
+# 发布产物（镜像 tar 包等，不入库）
+release/
+
+# 日志
+*.log
+
+# 系统与IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Node
+node_modules/
+
+# 内部协作文档（商业规划、开发约定、收敛清单、内部简报，不随开源仓库发布）
+STATUS.md
+整改意见*.md
+v*_整改变更清单.md
+LeadChat_业务与版本规划.md
+LeadChat_开发指南_AI专用.md
+LeadChat开源前收敛清单_*.md
+使用说明书.md
+发布推送清单.md
+readme改造建议.md
+docs/PRODUCT_ABSTRACTION_AUDIT.md
+docs/LEAD_REFERENCE_AUDIT.md

@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LeadChat 控制台</title>
+<link rel="icon" href="assets/zsoftym.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="assets/vendor/antd/reset.css"/>
+<style>
+:root {
+  --lc-primary: #2563EB;
+  --lc-bg: #ffffff;
+  --lc-border: #e5e7eb;
+  --lc-text: #1f2937;
+  --lc-text-2: #4b5563;
+  --lc-text-3: #9ca3af;
+  --lc-radius: 6px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+[v-cloak] { display: none; }
+
+/* ---------- 布局 ---------- */
+.aside {
+  width: 216px; flex-shrink: 0; height: 100vh; overflow-y: auto;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
+  color: #cbd5e1; display: flex; flex-direction: column;
+}
+.side-logo { display: flex; align-items: center; gap: 10px; padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.side-logo img { width: 34px; height: 34px; background: #fff; border-radius: 8px; padding: 4px; }
+.side-logo b { color: #fff; font-size: 15px; display: block; }
+.side-logo small { color: #94a3b8; font-size: 11px; }
+.menu { padding: 10px 0; flex: 1; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; margin: 2px 10px;
+  padding: 9px 12px; border-radius: 6px; cursor: pointer;
+  font-size: 13.5px; color: #cbd5e1; transition: background 0.15s, color 0.15s;
+  border-left: 3px solid transparent;
+}
+.menu-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.menu-item.active { background: var(--lc-primary); color: #fff; border-left-color: #93c5fd; }
+.menu-item svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
+
+.main-header {
+  height: 56px; background: #fff; border-bottom: 1px solid var(--lc-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 22px; flex-shrink: 0;
+}
+.crumb { font-size: 15px; font-weight: 600; color: var(--lc-text); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.ver-tag {
+  font-size: 11px; color: var(--lc-primary); background: #eff6ff;
+  border: 1px solid #bfdbfe; padding: 1px 8px; border-radius: 999px;
+}
+
+.main-body { flex: 1; overflow-y: auto; padding: 20px 22px 8px; display: flex; flex-direction: column; }
+.page-pane { flex: 1; }
+
+/* ---------- 品牌页脚 ---------- */
+.lc-brand-footer {
+  text-align: center; padding: 10px 0 12px; font-size: 12px; color: var(--lc-text-3);
+  flex-shrink: 0;
+}
+.lc-brand-footer a { color: var(--lc-text-3); text-decoration: none; }
+.lc-brand-footer a:hover { color: var(--lc-primary); }
+.lc-brand-footer .sep { margin: 0 8px; opacity: 0.6; }
+
+/* ---------- 登录页 ---------- */
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 20px;
+  background:
+    radial-gradient(900px 480px at 85% -10%, rgba(59, 130, 246, 0.16) 0%, transparent 60%),
+    radial-gradient(800px 420px at 5% 110%, rgba(99, 102, 241, 0.14) 0%, transparent 55%),
+    #f3f6fb;
+}
+.login-card2 {
+  display: flex; width: 960px; max-width: 100%; min-height: 540px;
+  background: #fff; border: 1px solid var(--lc-border); border-radius: 16px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
+}
+.login-brand2 {
+  flex: 1.15; background: linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%);
+  color: #fff; padding: 48px 42px; display: flex; flex-direction: column; justify-content: center; position: relative;
+}
+.login-brand2::after {
+  content: ""; position: absolute; right: -60px; bottom: -60px; width: 220px; height: 220px;
+  border-radius: 50%; background: rgba(255,255,255,0.06); pointer-events: none;
+}
+.brand-logo-badge {
+  width: 58px; height: 58px; background: #fff; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+}
+.brand-logo-badge img { width: 40px; height: 40px; }
+.login-brand2 h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: 0.5px; }
+.brand-sub { font-size: 13.5px; opacity: 0.88; line-height: 1.8; margin: 0 0 30px; }
+.brand-points { display: flex; flex-direction: column; gap: 16px; }
+.brand-point { display: flex; gap: 11px; align-items: flex-start; }
+.brand-point b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+.brand-point span { font-size: 12px; opacity: 0.78; line-height: 1.55; }
+.pt-ico {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px;
+  background: rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center;
+}
+.pt-ico svg { width: 17px; height: 17px; fill: #fff; }
+
+.login-form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 44px 40px; }
+.login-form-inner { width: 100%; max-width: 300px; }
+.lc-mark { display: flex; align-items: center; gap: 9px; margin-bottom: 30px; }
+.lc-mark img { width: 34px; height: 34px; }
+.lc-mark b { font-size: 17px; color: var(--lc-text); }
+.login-form-inner h2 { font-size: 21px; margin: 0 0 6px; color: var(--lc-text); }
+.login-tip { color: var(--lc-text-3); font-size: 13px; margin: 0 0 22px; }
+.login-form-inner .ant-input-affix-wrapper { border-radius: 8px; height: 44px; }
+.login-form-inner .ant-btn { width: 100%; margin-top: 16px; height: 44px; border-radius: 8px; font-size: 15px; }
+.login-form-inner .lc-brand-footer { margin-top: 34px; }
+
+/* ---------- 仪表盘 ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.stat-card {
+  background: #fff; border: 1px solid var(--lc-border); border-radius: var(--lc-radius);
+  padding: 16px; display: flex; align-items: center; gap: 13px;
+}
+.stat-ico { width: 40px; height: 40px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.stat-ico svg { width: 20px; height: 20px; fill: #fff; }
+.stat-card .num { font-size: 22px; font-weight: 700; color: var(--lc-text); line-height: 1.1; }
+.stat-card .label { font-size: 12px; color: var(--lc-text-3); margin-top: 2px; }
+
+.guide-card { margin-bottom: 4px; }
+.guide-steps { display: flex; flex-direction: column; gap: 10px; color: var(--lc-text-2); font-size: 13.5px; }
+.guide-steps > div { display: flex; gap: 10px; align-items: flex-start; }
+.step-no {
+  width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
+  background: #eff6ff; color: var(--lc-primary); border: 1px solid #bfdbfe;
+  font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+}
+.embed-code textarea { font-family: ui-monospace, Consolas, monospace !important; font-size: 12px; }
+
+/* ---------- 通用 ---------- */
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.muted { color: var(--lc-text-3); font-size: 12px; }
+
+/* antd-vue 4 使用 :where() 低优先级注入样式，会被 reset.css 压掉，此处补回 */
+.ant-card > .ant-card-body { padding: 24px; }
+.ant-table-tbody tr > td { border-bottom: 1px solid #f0f0f0 !important; }
+.ant-table-thead tr > th { border-bottom: 1px solid #f0f0f0 !important; }
+.ant-table-tbody tr.ant-table-row:hover > td { background: #f5f8ff; }
+
+/* ---------- 对话详情 ---------- */
+.chat-box { max-height: 62vh; overflow-y: auto; background: #f8fafc; border: 1px solid var(--lc-border); border-radius: var(--lc-radius); padding: 16px; }
+.chat-row { display: flex; margin-bottom: 12px; }
+.chat-row.user { justify-content: flex-end; }
+.chat-row .msg-wrap { max-width: 78%; }
+.chat-row.user .msg-wrap { display: flex; flex-direction: column; align-items: flex-end; }
+.chat-bubble { width: fit-content; max-width: 100%; padding: 9px 13px; border-radius: 8px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+.chat-row.user .chat-bubble { background: var(--lc-primary); color: #fff; border-bottom-right-radius: 2px; }
+.chat-row.ai .chat-bubble { background: #fff; border: 1px solid var(--lc-border); border-bottom-left-radius: 2px; }
+.chat-src { font-size: 11px; color: var(--lc-text-3); margin-top: 4px; }
+/* AI 回复 Markdown 排版 */
+.chat-bubble.md-body { white-space: normal; }
+.md-body > :first-child { margin-top: 0; }
+.md-body > :last-child { margin-bottom: 0; }
+.md-body p { margin: 6px 0; }
+.md-body h3, .md-body h4, .md-body h5, .md-body h6 { margin: 10px 0 4px; font-weight: 600; line-height: 1.4; }
+.md-body h3 { font-size: 15px; }
+.md-body h4 { font-size: 14px; }
+.md-body ul, .md-body ol { margin: 6px 0; padding-left: 20px; }
+.md-body li { margin: 2px 0; }
+.md-body a { color: var(--lc-primary); text-decoration: underline; word-break: break-all; }
+.md-body blockquote { margin: 6px 0; padding: 2px 10px; border-left: 3px solid var(--lc-border); color: var(--lc-text-3); }
+.md-body hr { border: 0; border-top: 1px solid var(--lc-border); margin: 10px 0; }
+.md-body .lc-md-code { padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.06); font-family: Consolas, Monaco, "Courier New", monospace; font-size: 12px; word-break: break-all; }
+.md-body .lc-md-pre { margin: 6px 0; padding: 10px 12px; border-radius: 8px; background: #1f2937; color: #e5e7eb; overflow-x: auto; line-height: 1.5; }
+.md-body .lc-md-pre code { font-family: Consolas, Monaco, "Courier New", monospace; font-size: 12px; white-space: pre; background: none; padding: 0; }
+.md-body .lc-md-table { margin: 8px 0; overflow-x: auto; }
+.md-body table { border-collapse: collapse; font-size: 12px; width: 100%; }
+.md-body th, .md-body td { border: 1px solid var(--lc-border); padding: 4px 8px; text-align: left; }
+.md-body th { background: rgba(0,0,0,.03); font-weight: 600; }
+
+/* ---------- 设置页 ---------- */
+.setting-section { margin-bottom: 16px; }
+.field-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+.af-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+.save-bar { position: sticky; bottom: 0; padding: 12px 0 16px; background: linear-gradient(transparent, var(--lc-bg) 30%); }
+.color-row { display: flex; align-items: center; gap: 8px; }
+.color-input { width: 42px; height: 32px; padding: 2px; border: 1px solid #d9d9d9; border-radius: 6px; cursor: pointer; background: #fff; }
+
+/* ---------- 图标选择器 ---------- */
+.icon-picker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.icon-opt {
+  width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--lc-border);
+  background: #f3f6fb; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.icon-opt svg { width: 22px; height: 22px; fill: #475569; }
+.icon-opt img { width: 24px; height: 24px; border-radius: 5px; object-fit: cover; display: block; }
+.icon-opt:hover { border-color: var(--lc-primary); }
+.icon-opt.active { border-color: var(--lc-primary); background: #eff6ff; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
+.icon-opt.active svg { fill: var(--lc-primary); }
+
+@media (max-width: 860px) {
+  .login-brand2 { display: none; }
+  .login-card2 { min-height: 0; }
+}
+</style>
+</head>
+<body>
+<div id="app" v-cloak></div>
+<script type="text/x-template" id="lc-app-tpl">
+<div v-cloak>
+
+  <!-- 登录 -->
+  <div v-if="!token" class="login-wrap">
+    <div class="login-card2">
+      <div class="login-brand2">
+        <div class="brand-logo-badge"><img src="assets/zsoftym.svg" alt="ZSoftYM"/></div>
+        <h1>LeadChat</h1>
+        <p class="brand-sub">一行代码嵌入任何 Web 系统的开源 Web AI Assistant<br/>用对话连接用户与业务，数据完全私有化部署</p>
+        <div class="brand-points">
+          <div class="brand-point">
+            <span class="pt-ico"><svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.6 5.3 4 6.9V22l3.7-2c.7.1 1.5.2 2.3.2 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg></span>
+            <div><b>RAG 知识库问答</b><span>上传产品文档，AI 基于您的真实业务内容回答</span></div>
+          </div>
+          <div class="brand-point">
+            <span class="pt-ico"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg></span>
+            <div><b>多助手管理 · 业务数据采集</b><span>默认助手纯问答；售后工单 / 需求收集等场景按助手编排字段与话术</span></div>
+          </div>
+          <div class="brand-point">
+            <span class="pt-ico"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 .1-1 7.6 7.6 0 0 0-.1-1l2.1-1.7a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.7 7.7 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4L9 5a7.7 7.7 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.5 11a7.6 7.6 0 0 0-.1 1 7.6 7.6 0 0 0 .1 1l-2.2 1.7a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.7 7.7 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.7 7.7 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6z"/></svg></span>
+            <div><b>多模型自由切换</b><span>OpenAI / DeepSeek / 通义 / GLM / 本地 Ollama</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-form-side">
+        <div class="login-form-inner">
+          <div class="lc-mark"><img src="assets/zsoftym.svg" alt="logo"/><b>LeadChat</b></div>
+          <h2>欢迎回来</h2>
+          <p class="login-tip">请输入管理密码登录控制台</p>
+          <a-input-password v-model:value="loginPassword" placeholder="管理密码" size="large"
+                            @pressEnter="doLogin"></a-input-password>
+          <a-button type="primary" size="large" :loading="loginLoading" @click="doLogin">
+            登 录
+          </a-button>
+          <div v-if="footerEnabled" class="lc-brand-footer">
+            Powered by <a href="https://www.zsoftym.com" target="_blank" rel="noopener noreferrer">栈上月明 (zsoftym.com)</a>
+            <span class="sep">|</span>
+            <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">陕ICP备2026016303号-1</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主布局 -->
+  <div v-else style="display:flex; height:100vh">
+    <aside class="aside">
+      <div class="side-logo">
+        <img src="assets/zsoftym.svg" alt="logo"/>
+        <div><b>LeadChat</b><small>Web AI Assistant</small></div>
+      </div>
+      <nav class="menu">
+        <div class="menu-item" :class="{ active: page === 'dashboard' }" @click="switchPage('dashboard')">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10 9.9 9.9 0 0 0 4.4 8.3l1-1.7A8 8 0 1 1 12 20a8 8 0 0 1-4.6-1.4l-1 1.7A10 10 0 1 0 12 2zm1 5h-2v6l5.2 3.1 1-1.7L13 12V7z"/></svg>
+          仪表盘
+        </div>
+        <div class="menu-item" :class="{ active: page === 'assistants' }" @click="switchPage('assistants')">
+          <svg viewBox="0 0 24 24"><path d="M12 2a1.5 1.5 0 0 0-1.5 1.5V5h-4A3.5 3.5 0 0 0 3 8.5v8A3.5 3.5 0 0 0 6.5 20h11a3.5 3.5 0 0 0 3.5-3.5v-8A3.5 3.5 0 0 0 17.5 5h-4V3.5A1.5 1.5 0 0 0 12 2zm-3.5 9a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zm7 0a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zM8 16.2c.6.7 1.7 1.3 4 1.3s3.4-.6 4-1.3l1.1 1c-.9 1-2.5 1.8-5.1 1.8s-4.2-.8-5.1-1.8z"/></svg>
+          多助手
+        </div>
+        <div class="menu-item" :class="{ active: page === 'conversations' }" @click="switchPage('conversations')">
+          <svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.6 5.3 4 6.9V22l3.7-2c.7.1 1.5.2 2.3.2 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>
+          对话记录
+        </div>
+        <div class="menu-item" :class="{ active: page === 'knowledge' }" @click="switchPage('knowledge')">
+          <svg viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3L7 7v10l5-5 5 5V7z"/></svg>
+          知识库
+        </div>
+        <div class="menu-item" :class="{ active: page === 'collected' }" @click="switchPage('collected')">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>
+          采集数据
+        </div>
+        <div class="menu-item" :class="{ active: page === 'settings' }" @click="switchPage('settings')">
+          <svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 .1-1 7.6 7.6 0 0 0-.1-1l2.1-1.7a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.7 7.7 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4L9 5a7.7 7.7 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.5 11a7.6 7.6 0 0 0-.1 1 7.6 7.6 0 0 0 .1 1l-2.2 1.7a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.7 7.7 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.7 7.7 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6z"/></svg>
+          系统设置
+        </div>
+      </nav>
+    </aside>
+
+    <div style="flex:1; display:flex; flex-direction:column; overflow:hidden">
+      <header class="main-header">
+        <span class="crumb">{{ pageTitle }}</span>
+        <div class="header-right">
+          <span class="ver-tag">v0.5.2</span>
+          <a-button type="link" size="small" @click="logout">退出登录</a-button>
+        </div>
+      </header>
+
+      <main class="main-body">
+        <div class="page-pane">
+
+        <!-- 仪表盘 -->
+        <div v-if="page==='dashboard'">
+          <div class="stat-grid">
+            <div class="stat-card" v-for="(s, i) in statCards" :key="s.label">
+              <span class="stat-ico" :style="{ background: statColors[i] }" v-html="s.icon"></span>
+              <div><div class="num">{{ s.value }}</div><div class="label">{{ s.label }}</div></div>
+            </div>
+          </div>
+          <a-card class="guide-card" title="开始使用">
+            <div class="guide-steps">
+              <div><span class="step-no">1</span>在「知识库」上传你的产品文档（PDF / DOCX / TXT / MD），AI 将基于文档内容回答</div>
+              <div><span class="step-no">2</span>默认助手开箱即是纯问答；需要采集时，在「多助手」按场景创建助手（通用问答 / 售后客服 / 内部 Copilot / 需求收集 / 销售线索），配置话术与采集字段</div>
+              <div><span class="step-no">3</span>把下面这行代码粘贴到任何 Web 系统（&lt;/body&gt; 前），即嵌入一个 AI 助手：</div>
+              <a-textarea class="embed-code" :value="embedCode" readonly :rows="2" style="margin-top:6px"></a-textarea>
+            </div>
+          </a-card>
+        </div>
+
+        <!-- 对话记录 -->
+        <a-card v-if="page==='conversations'">
+          <div class="toolbar">
+            <a-select v-model:value="convStatus" placeholder="全部状态" allow-clear style="width:140px"
+                      :options="[{ label: '进行中', value: 'active' }, { label: '已结束', value: 'closed' }]"
+                      @change="onConvFilterChange"></a-select>
+            <a-button @click="loadConversations">刷新</a-button>
+          </div>
+          <a-table :columns="convColumns" :data-source="conversations" row-key="id" size="middle"
+                   :loading="convLoading"
+                   :pagination="{ current: convPage, pageSize: convPageSize, total: convTotal,
+                                  showSizeChanger: false, showTotal: t => `共 ${t} 条`,
+                                  onChange: p => { convPage = p; loadConversations(); } }">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'id'"><span class="muted">{{ record.id.slice(0, 8) }}…</span></template>
+              <template v-else-if="column.key === 'visitor'">
+                <span v-if="record.visitor_id">{{ record.visitor_id.slice(0, 12) }}</span>
+                <span v-else class="muted">匿名访客</span>
+              </template>
+              <template v-else-if="column.key === 'status'">
+                <a-tag :color="record.status === 'active' ? 'green' : 'default'">
+                  {{ record.status === 'active' ? '进行中' : '已结束' }}
+                </a-tag>
+              </template>
+              <template v-else-if="column.key === 'created_at'">{{ fmtTime(record.created_at) }}</template>
+              <template v-else-if="column.key === 'updated_at'">{{ fmtTime(record.updated_at) }}</template>
+              <template v-else-if="column.key === 'action'">
+                <a-button type="link" size="small" style="padding:0" @click="openConversation(record)">查看</a-button>
+                <a-popconfirm v-if="record.status === 'active'" title="确定结束该对话？"
+                              ok-text="结束" cancel-text="取消" @confirm="closeConversation(record)">
+                  <a-button type="link" danger size="small" style="padding:0">结束</a-button>
+                </a-popconfirm>
+                <a-popconfirm title="删除后对话与全部消息不可恢复，确定？"
+                              ok-text="删除" cancel-text="取消" @confirm="deleteConversation(record)">
+                  <a-button type="link" danger size="small" style="padding:0">删除</a-button>
+                </a-popconfirm>
+              </template>
+            </template>
+            <template #emptyText>暂无对话</template>
+          </a-table>
+        </a-card>
+
+        <!-- 知识库 -->
+        <a-card v-if="page==='knowledge'">
+          <div class="toolbar" style="display:block">
+            <a-upload-dragger :action="LC_BASE + '/api/knowledge/upload'" name="file" :headers="uploadHeaders"
+                              :show-upload-list="false" accept=".pdf,.docx,.txt,.md"
+                              :disabled="uploadBusy"
+                              :before-upload="beforeUpload" @change="onUploadChange" style="width:100%">
+              <div style="padding:16px 0;color:#6b7280" :style="uploadBusy ? 'opacity:0.55' : ''">
+                拖拽文件到此处，或 <em style="color:var(--lc-primary);font-style:normal">点击上传</em>
+                <div class="muted" style="margin-top:4px">支持 PDF / DOCX / TXT / MD，单文件不超过 20MB</div>
+              </div>
+            </a-upload-dragger>
+            <div v-if="uploadBusy" style="margin-top:12px">
+              <a-progress v-if="uploadState === 'uploading'" :percent="uploadPercent" size="small" status="active"></a-progress>
+              <div v-else style="display:flex;align-items:center;gap:8px;color:#6b7280">
+                <a-spin size="small"></a-spin>
+                <span>文件已上传，服务器解析并向量化中，大文档可能需要几十秒，请勿关闭页面…</span>
+              </div>
+            </div>
+            <a-button style="margin-top:12px" @click="loadDocuments">刷新</a-button>
+          </div>
+          <a-table :columns="docColumns" :data-source="documents" row-key="id" size="middle"
+                   :pagination="false">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'file_type'">
+                <a-tag size="small">{{ record.file_type }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'created_at'">{{ fmtTime(record.created_at) }}</template>
+              <template v-else-if="column.key === 'action'">
+                <a-popconfirm title="确定删除该文档？将同时删除向量索引"
+                              ok-text="删除" cancel-text="取消" @confirm="deleteDocument(record)">
+                  <a-button type="link" danger size="small" style="padding:0">删除</a-button>
+                </a-popconfirm>
+              </template>
+            </template>
+            <template #emptyText>暂无文档，先上传一个试试</template>
+          </a-table>
+        </a-card>
+
+        <!-- 多助手管理 -->
+        <a-card v-if="page==='assistants'">
+          <div class="toolbar">
+            <a-button type="primary" @click="openCreateAssistant">+ 新建助手</a-button>
+            <a-button @click="loadAssistants">刷新</a-button>
+            <span class="muted">不同助手可配置不同话术、业务字段与嵌入代码；默认助手为纯问答，留空项继承「系统设置」全局配置</span>
+          </div>
+          <a-table :columns="assistantColumns" :data-source="assistants" row-key="id" size="middle"
+                   :loading="assistantLoading" :pagination="false">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'name'">
+                <div>
+                  {{ record.name }}
+                  <a-tag v-if="record.is_default" color="blue">默认</a-tag>
+                  <a-tag v-if="record.status !== 'active'" color="default">已停用</a-tag>
+                </div>
+                <div class="muted">{{ record.id }}</div>
+              </template>
+              <template v-else-if="column.key === 'scenario'">
+                <a-tag>{{ scenarioLabel(record.scenario) }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'collect'">{{ collectText(record) }}</template>
+              <template v-else-if="column.key === 'status'">
+                <a-switch size="small" :checked="record.status === 'active'" :disabled="record.is_default"
+                          @change="v => toggleAssistantStatus(record, v)"></a-switch>
+              </template>
+              <template v-else-if="column.key === 'action'">
+                <a-button type="link" size="small" style="padding:0" @click="openEmbed(record)">嵌入代码</a-button>
+                <a-button type="link" size="small" style="padding:0" @click="editAssistant(record)">编辑</a-button>
+                <a-button v-if="!record.is_default" type="link" size="small" style="padding:0"
+                          @click="setDefaultAssistant(record)">设为默认</a-button>
+                <a-popconfirm v-if="!record.is_default" title="删除该助手不影响历史会话与已采集数据，确定？"
+                              ok-text="删除" cancel-text="取消" @confirm="deleteAssistant(record)">
+                  <a-button type="link" danger size="small" style="padding:0">删除</a-button>
+                </a-popconfirm>
+              </template>
+            </template>
+            <template #emptyText>还没有助手</template>
+          </a-table>
+        </a-card>
+
+        <!-- 采集数据 -->
+        <a-card v-if="page==='collected'">
+          <div class="toolbar">
+            <a-radio-group v-model:value="collectedType" button-style="solid" @change="onCollectedFilterChange">
+              <a-radio-button value="">全部</a-radio-button>
+              <a-radio-button value="ticket">售后工单</a-radio-button>
+              <a-radio-button value="requirement">需求</a-radio-button>
+              <a-radio-button value="appointment">预约</a-radio-button>
+              <a-radio-button value="custom">自定义</a-radio-button>
+              <a-radio-button value="lead">销售线索</a-radio-button>
+            </a-radio-group>
+            <a-select v-model:value="collectedAssistant" placeholder="全部助手" allow-clear style="width:180px"
+                      :options="assistantFilterOptions" @change="onCollectedFilterChange"></a-select>
+            <a-button @click="loadCollected">刷新</a-button>
+          </div>
+          <a-table :columns="collectedColumns" :data-source="collected" row-key="id" size="middle"
+                   :loading="collectedLoading"
+                   :pagination="{ current: collectedPage, pageSize: collectedPageSize, total: collectedTotal,
+                                  showSizeChanger: false, showTotal: t => '共 ' + t + ' 条',
+                                  onChange: p => { collectedPage = p; loadCollected(); } }">
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'assistant'">
+                <span>{{ assistantName(record.assistant_id) }}</span>
+              </template>
+              <template v-else-if="column.key === 'data_type'">
+                <a-tag :color="dataTypeColor(record.data_type)">{{ dataTypeLabel(record.data_type) }}</a-tag>
+              </template>
+              <template v-else-if="column.key === 'payload'">
+                <a-tooltip :title="payloadText(record.payload)">
+                  <span>{{ payloadText(record.payload) }}</span>
+                </a-tooltip>
+              </template>
+              <template v-else-if="column.key === 'status'">
+                <a-select :value="record.status" size="small" style="width:100px"
+                          :options="[{ label: '待处理', value: 'new' }, { label: '已处理', value: 'processed' }, { label: '已关闭', value: 'closed' }]"
+                          @change="s => updateCollectedStatus(record, s)"></a-select>
+              </template>
+              <template v-else-if="column.key === 'created_at'">{{ fmtTime(record.created_at) }}</template>
+              <template v-else-if="column.key === 'action'">
+                <a-popconfirm title="确定删除该采集数据？"
+                              ok-text="删除" cancel-text="取消" @confirm="deleteCollected(record)">
+                  <a-button type="link" danger size="small" style="padding:0">删除</a-button>
+                </a-popconfirm>
+              </template>
+            </template>
+            <template #emptyText>暂无采集数据</template>
+          </a-table>
+        </a-card>
+
+        <!-- 系统设置 -->
+        <div v-if="page==='settings'">
+          <a-card class="setting-section" title="AI 话术">
+            <a-form :label-col="{ style: { width: '110px' } }">
+              <a-form-item label="公司名称">
+                <a-input v-model:value="settingsForm.company_name" style="max-width:320px"></a-input>
+              </a-form-item>
+              <a-form-item label="业务描述">
+                <a-input v-model:value="settingsForm.business_description" style="max-width:520px"
+                         placeholder="例如：企业官网建设与SEO优化服务"></a-input>
+              </a-form-item>
+              <a-form-item label="系统提示词">
+                <a-textarea v-model:value="settingsForm.system_prompt" :rows="8"></a-textarea>
+                <div class="muted">可用变量：{company_name} {business_description}</div>
+              </a-form-item>
+            </a-form>
+          </a-card>
+
+          <a-card class="setting-section" title="业务字段与采集（默认助手 · 全局回退）">
+            <div class="muted" style="margin:-8px 0 14px">
+              默认开箱为纯问答、字段列表为空，不会向访客索取任何信息。仅当默认助手切换到「主动采集」模式时才会使用这里的引导话术与业务字段；其他助手的独立配置请在「多助手」页维护。
+            </div>
+            <a-form :label-col="{ style: { width: '110px' } }">
+              <a-form-item label="引导话术">
+                <a-textarea v-model:value="settingsForm.collect_guide_message" :rows="2"
+                            placeholder="采集业务信息时，AI 追问缺失字段的整体语气参考"></a-textarea>
+              </a-form-item>
+              <a-form-item label="业务字段">
+                <div>
+                  <div class="field-row" v-for="(f, i) in settingsForm.formFields" :key="i">
+                    <a-input v-model:value="f.key" placeholder="字段标识，如 company / budget" style="width:180px" size="small"></a-input>
+                    <a-input v-model:value="f.label" placeholder="显示标签，如 公司名称" style="width:180px" size="small"></a-input>
+                    <a-select v-model:value="f.type" size="small" style="width:108px" :options="fieldTypeOptions"></a-select>
+                    <a-checkbox v-model:checked="f.required">必填</a-checkbox>
+                    <a-button type="link" danger size="small" style="padding:0"
+                              @click="settingsForm.formFields.splice(i, 1)">移除</a-button>
+                  </div>
+                  <a-button size="small" @click="settingsForm.formFields.push({ key: '', label: '', type: 'string', required: false })">
+                    + 添加字段
+                  </a-button>
+                  <div class="muted" style="margin-top:6px">字段标识仅允许小写字母、数字、下划线 / 中划线；电话、邮箱、数字等类型带格式校验</div>
+                </div>
+              </a-form-item>
+            </a-form>
+          </a-card>
+
+          <a-card class="setting-section" title="挂件外观">
+            <a-form :label-col="{ style: { width: '110px' } }">
+              <a-form-item label="欢迎语">
+                <a-input v-model:value="settingsForm.welcome_message" style="max-width:520px"></a-input>
+                <div class="muted" style="margin-top:4px">访客打开聊天窗口时，自动发送的第一条消息</div>
+              </a-form-item>
+              <a-form-item label="自动弹出">
+                <div class="color-row">
+                  <a-input-number v-model:value="settingsForm.auto_popup_delay" :min="0" :max="600"
+                                  :step="1" style="width:110px" addon-after="秒"></a-input>
+                  <span class="muted">访客进入页面后延迟弹出气泡（填 0 关闭自动弹出）</span>
+                </div>
+              </a-form-item>
+              <a-form-item label="弹出文案">
+                <a-input v-model:value="settingsForm.popup_message" style="max-width:520px"
+                         placeholder="例如：您好，请问有什么可以帮您吗？"></a-input>
+              </a-form-item>
+              <a-form-item label="主题色">
+                <div class="color-row">
+                  <input type="color" v-model="settingsForm.widget_theme" class="color-input"/>
+                  <a-input v-model:value="settingsForm.widget_theme" style="width:140px"></a-input>
+                </div>
+              </a-form-item>
+              <a-form-item label="按钮图标">
+                <div>
+                  <div class="icon-picker">
+                    <div v-for="ic in iconPresets" :key="ic.key" class="icon-opt"
+                         :class="{ active: settingsForm.widget_icon === ic.key }"
+                         :title="ic.label" v-html="ic.svg"
+                         @click="settingsForm.widget_icon = ic.key"></div>
+                    <div v-if="isCustomIcon" class="icon-opt active" title="自定义图标">
+                      <img :src="settingsForm.widget_icon" alt=""/>
+                    </div>
+                    <a-button size="small" @click="$refs.iconFile.click()">上传图标</a-button>
+                    <a-button v-if="settingsForm.widget_icon !== 'chat'" type="link" size="small"
+                              style="padding:0" @click="settingsForm.widget_icon = 'chat'">还原默认</a-button>
+                    <input ref="iconFile" type="file" accept="image/*" style="display:none" @change="onIconFile"/>
+                  </div>
+                  <div class="muted" style="margin-top:6px">预设图标点选即用，或上传 PNG / JPG / SVG（≤200KB）作为自定义图标</div>
+                </div>
+              </a-form-item>
+              <a-form-item label="位置">
+                <a-radio-group v-model:value="settingsForm.widget_position">
+                  <a-radio-button value="right">右下角</a-radio-button>
+                  <a-radio-button value="left">左下角</a-radio-button>
+                </a-radio-group>
+              </a-form-item>
+            </a-form>
+          </a-card>
+
+          <div class="save-bar">
+            <a-button type="primary" size="large" :loading="saving" @click="saveSettings">保存全部设置</a-button>
+          </div>
+        </div>
+
+        </div>
+
+        <!-- 品牌页脚 -->
+        <div v-if="footerEnabled" class="lc-brand-footer">
+          Powered by <a href="https://www.zsoftym.com" target="_blank" rel="noopener noreferrer">栈上月明 (zsoftym.com)</a>
+          <span class="sep">|</span>
+          <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">陕ICP备2026016303号-1</a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 对话详情抽屉 -->
+  <a-drawer v-model:open="convDrawer" title="对话详情" :width="540" placement="right">
+    <div class="chat-box">
+      <div v-for="m in convMessages" :key="m.id" class="chat-row" :class="m.role === 'user' ? 'user' : 'ai'">
+        <div class="msg-wrap">
+          <div v-if="m.role === 'user'" class="chat-bubble">{{ m.content }}</div>
+          <!-- AI 回复经安全 Markdown 渲染器（先转义后格式化） -->
+          <div v-else class="chat-bubble md-body" v-html="renderMd(m.content)"></div>
+          <div v-if="m.sources && m.sources.length" class="chat-src">引用：{{ sourceNames(m.sources) }}</div>
+        </div>
+      </div>
+      <div v-if="!convMessages.length" class="muted">无消息</div>
+    </div>
+  </a-drawer>
+
+  <!-- 助手编辑抽屉 -->
+  <a-drawer v-model:open="assistantDrawer" :title="assistantEditing ? '编辑助手' : '新建助手'"
+            :width="780" placement="right">
+    <a-alert v-if="assistantForm.id === 'default'" type="info" show-icon style="margin-bottom:16px"
+             message="默认助手说明"
+             description="话术、外观、字段留空时继承「系统设置」的全局配置；一旦在此填写自定义值，将覆盖全局配置。"></a-alert>
+    <a-form layout="vertical">
+      <a-form-item label="场景模板" required>
+        <a-select v-model:value="assistantForm.scenario" :options="scenarioOptions"
+                  :disabled="!!assistantEditing" style="max-width:360px"
+                  @change="onScenarioChange"></a-select>
+        <div class="muted">{{ scenarioHint }}</div>
+      </a-form-item>
+      <a-form-item v-if="!assistantEditing" label="助手 ID">
+        <a-input v-model:value="assistantForm.id" style="max-width:360px"
+                 placeholder="留空自动生成；嵌入代码将使用该 ID，如 support"></a-input>
+        <div class="muted">小写字母 / 数字 / 中划线 / 下划线，32 字符内，创建后不可修改</div>
+      </a-form-item>
+      <a-form-item label="名称" required>
+        <a-input v-model:value="assistantForm.name" style="max-width:360px" placeholder="如：官网售后助手"></a-input>
+      </a-form-item>
+      <a-form-item label="描述">
+        <a-textarea v-model:value="assistantForm.description" :rows="2"
+                    placeholder="仅后台展示，帮助团队成员理解用途"></a-textarea>
+      </a-form-item>
+      <a-form-item label="Instructions（系统提示词）">
+        <a-textarea v-model:value="assistantForm.system_prompt" :rows="7"></a-textarea>
+        <div class="muted">可用变量：{company_name} {business_description}；留空表示继承系统设置中的全局提示词</div>
+      </a-form-item>
+      <a-form-item label="采集模式">
+        <a-radio-group v-model:value="assistantForm.collect_mode">
+          <a-radio value="collect">主动采集</a-radio>
+          <a-radio value="ask">仅问答</a-radio>
+        </a-radio-group>
+        <div class="muted">主动采集：识别业务意图后自然引导用户提供信息并结构化落库；仅问答：不采集任何信息</div>
+      </a-form-item>
+      <a-form-item label="采集数据类型">
+        <a-select v-model:value="assistantForm.collect_data_type" :options="dataTypeOptions"
+                  :disabled="assistantForm.collect_mode === 'ask'" style="width:240px"></a-select>
+        <div class="muted">所有采集结果统一进入「采集数据」，可按数据类型筛选查看</div>
+      </a-form-item>
+      <a-form-item label="业务字段">
+        <div style="width:100%">
+          <div class="af-row" v-for="(f, i) in assistantForm.fields" :key="i">
+            <a-input v-model:value="f.key" placeholder="标识，如 order_id" size="small" style="width:130px"></a-input>
+            <a-input v-model:value="f.label" placeholder="标签，如 订单号" size="small" style="width:130px"></a-input>
+            <a-select v-model:value="f.type" size="small" style="width:108px" :options="fieldTypeOptions"></a-select>
+            <a-input v-if="f.type === 'enum'" v-model:value="f.optionsText"
+                     placeholder="枚举选项，逗号分隔" size="small" style="flex:1;min-width:160px"></a-input>
+            <a-checkbox v-model:checked="f.required">必填</a-checkbox>
+            <a-button type="link" danger size="small" style="padding:0"
+                      @click="assistantForm.fields.splice(i, 1)">移除</a-button>
+          </div>
+          <a-button size="small" @click="addField">+ 添加字段</a-button>
+          <div class="muted">标识仅允许小写字母、数字、下划线 / 中划线；电话 / 邮箱 / 数字等类型带格式质量门禁，name 字段带称呼质量校验</div>
+        </div>
+      </a-form-item>
+      <a-form-item label="业务上下文白名单">
+        <a-input v-model:value="assistantForm.contextKeys" style="max-width:520px"
+                 placeholder="page, order_id, product_id（留空 = 不限制键名）"></a-input>
+        <div class="muted">嵌入方通过 LeadChat.init 的 context 参数传入宿主上下文；仅白名单键名会进入 Prompt，且服务端只接受扁平标量值</div>
+      </a-form-item>
+      <a-form-item label="挂件外观覆盖（留空继承全局）">
+        <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+          <a-input v-model:value="assistantForm.ui.title" style="max-width:360px"
+                   placeholder="窗口标题（留空继承全局）"></a-input>
+          <a-input v-model:value="assistantForm.ui.welcome_message" style="max-width:520px"
+                   placeholder="欢迎语（留空继承全局）"></a-input>
+          <div class="color-row">
+            <span class="muted" style="width:56px">主题色</span>
+            <input type="color" v-model="assistantForm.ui.theme" class="color-input"/>
+            <a-input v-model:value="assistantForm.ui.theme" style="width:140px" placeholder="#2563EB"></a-input>
+          </div>
+          <a-radio-group v-model:value="assistantForm.ui.position">
+            <a-radio-button value="right">右下角</a-radio-button>
+            <a-radio-button value="left">左下角</a-radio-button>
+            <a-radio-button value="">继承全局</a-radio-button>
+          </a-radio-group>
+        </div>
+      </a-form-item>
+    </a-form>
+    <template #footer>
+      <a-button @click="assistantDrawer = false">取消</a-button>
+      <a-button type="primary" :loading="assistantSaving" @click="saveAssistant">保存</a-button>
+    </template>
+  </a-drawer>
+
+  <!-- 嵌入代码弹窗 -->
+  <a-modal v-model:open="embedModal" :title="'嵌入代码 · ' + (embedRecord ? embedRecord.name : '')"
+           :footer="null" width="720px">
+    <div class="muted" style="margin-bottom:6px">方式一：script 属性（最简，一行代码）</div>
+    <a-textarea class="embed-code" :value="scriptEmbed" readonly :rows="3"></a-textarea>
+    <a-button size="small" style="margin:6px 0 16px" @click="copyText(scriptEmbed)">复制代码</a-button>
+    <div class="muted" style="margin-bottom:6px">方式二：LeadChat.init（可携带业务上下文，适合任意 Web 系统 / SPA）</div>
+    <a-textarea class="embed-code" :value="initEmbed" readonly :rows="9"></a-textarea>
+    <a-button size="small" style="margin-top:6px" @click="copyText(initEmbed)">复制代码</a-button>
+  </a-modal>
+
+</div>
+</script>
+
+<script src="assets/vendor/vue/vue.global.prod.js"></script>
+<script src="assets/vendor/dayjs/dayjs.min.js"></script>
+<script src="assets/vendor/dayjs/plugin/customParseFormat.js"></script>
+<script src="assets/vendor/dayjs/plugin/weekday.js"></script>
+<script src="assets/vendor/dayjs/plugin/localeData.js"></script>
+<script src="assets/vendor/dayjs/plugin/weekOfYear.js"></script>
+<script src="assets/vendor/dayjs/plugin/weekYear.js"></script>
+<script src="assets/vendor/dayjs/plugin/advancedFormat.js"></script>
+<script src="assets/vendor/dayjs/plugin/quarterOfYear.js"></script>
+<script src="assets/vendor/antd/antd.min.js"></script>
+<script src="assets/vendor/axios/axios.min.js"></script>
+<script>
+const TOKEN_KEY = "lc_admin_token";
+
+// 部署前缀推导：/leadchat/admin/ → "/leadchat"；/admin/ → ""（根路径部署）
+var LC_BASE = location.pathname.replace(/\/admin(\/.*)?$/, "");
+const api = axios.create({ baseURL: LC_BASE });
+api.interceptors.request.use(cfg => {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (t) cfg.headers["X-Admin-Token"] = t;
+  return cfg;
+});
+api.interceptors.response.use(
+  r => r,
+  err => {
+    if (err.response && err.response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      if (window.__lc_app) window.__lc_app.token = "";
+    }
+    return Promise.reject(err);
+  }
+);
+
+/* 统计卡片图标（内联 SVG） */
+const LC_STAT_ICONS = [
+  '<svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.6 5.3 4 6.9V22l3.7-2c.7.1 1.5.2 2.3.2 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M15 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2zm9 4c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3L7 7v10l5-5 5 5V7z"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5a2 2 0 0 0-2 2v1a5 5 0 0 0 4.4 5A6 6 0 0 0 11 16.9V19H8v2h8v-2h-3v-2.1A6 6 0 0 0 16.6 13 5 5 0 0 0 21 8V7a2 2 0 0 0-2-2zM5 8V7h2v3.8A3 3 0 0 1 5 8zm14 0a3 3 0 0 1-2 2.8V7h2z"/></svg>',
+  '<svg viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 3.8 4 6v12c0 2.2 3.6 4 8 4s8-1.8 8-4V6c0-2.2-3.6-4-8-4zm0 2c3.9 0 6 1.3 6 2s-2.1 2-6 2-6-1.3-6-2 2.1-2 6-2z"/></svg>'
+];
+
+const LC_STAT_COLORS = ["#2563EB", "#F59E0B", "#10B981", "#8B5CF6", "#06B6D4", "#EF4444"];
+
+console.log("%c 欢迎使用 LeadChat ", "background: #222; color: #bada55; font-size: 20px; padding: 10px;");
+console.log("%c 由 西安栈上月明软件科技有限公司 荣誉出品", "color: #666; font-size: 12px;");
+
+const msg = () => antd.message;
+
+// ---------- 安全 Markdown 渲染器（与挂件 widget/src/md.js 保持同源逻辑） ----------
+// 先整体 HTML 转义防 XSS，再格式化；链接协议白名单；代码内容不二次解析
+function lcMdEscape(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function lcMdSafeUrl(u) {
+  const v = String(u == null ? "" : u).trim();
+  return /^(?:https?:\/\/|mailto:|\/(?!\/))/i.test(v) ? v.replace(/"/g, "%22") : null;
+}
+function lcRenderMarkdown(src) {
+  const TOKEN_B = "\u0001", TOKEN_I = "\u0002";
+  let text = lcMdEscape(src).replace(/\r\n?/g, "\n");
+  const blockCodes = [];
+  text = text.replace(/```[^\n`]*\n?([\s\S]*?)```/g, (_all, code) => {
+    const html = '<pre class="lc-md-pre"><code>' + String(code).replace(/\n$/, "") + "</code></pre>";
+    return "\n" + TOKEN_B + (blockCodes.push(html) - 1) + TOKEN_I + "\n";
+  });
+  function inline(s) {
+    const inlineCodes = [];
+    s = s.replace(/`([^`\n]+?)`/g, (_all, code) =>
+      TOKEN_B + "I" + (inlineCodes.push('<code class="lc-md-code">' + code + "</code>") - 1) + TOKEN_I);
+    s = s.replace(/\[([^\]]+)\]\(([^)\s("']+)(?:\s+(?:&quot;|")[^&"]*?(?:&quot;|"))?\)/g,
+      (_all, label, url) => {
+        const safe = lcMdSafeUrl(url);
+        return safe
+          ? '<a href="' + safe + '" target="_blank" rel="noopener noreferrer">' + label + "</a>"
+          : label;
+      });
+    s = s
+      .replace(/\*\*([^*]+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/__([^_]+?)__/g, "<strong>$1</strong>")
+      .replace(/~~([^~]+?)~~/g, "<del>$1</del>")
+      .replace(/(^|[\s(（>])\*([^*\n]+?)\*(?=[\s)）。，！？、：：.!?,:]|$)/g, "$1<em>$2</em>")
+      .replace(/(^|[\s(（>])_([^_\n]+?)_(?=[\s)）。，！？、：：.!?,:]|$)/g, "$1<em>$2</em>");
+    return s.replace(new RegExp(TOKEN_B + "I(\\d+)" + TOKEN_I, "g"),
+      (_all, i) => inlineCodes[i]);
+  }
+  const lines = text.split("\n");
+  const out = [];
+  let i = 0;
+  const isListMarker = l => /^\s{0,3}(?:[-*+]|\d+[.)])\s+/.test(l);
+  const listTag = l => /^\s{0,3}\d+[.)]\s+/.test(l) ? "ol" : "ul";
+  while (i < lines.length) {
+    const line = lines[i];
+    const bm = line.match(new RegExp("^" + TOKEN_B + "(\\d+)" + TOKEN_I + "$"));
+    if (bm) { out.push(blockCodes[Number(bm[1])]); i++; continue; }
+    if (!line.trim()) { i++; continue; }
+    const hm = line.match(/^(#{1,6})\s+(.*)$/);
+    if (hm) {
+      const level = Math.min(hm[1].length + 2, 6);
+      out.push("<h" + level + ">" + inline(hm[2].trim()) + "</h" + level + ">");
+      i++; continue;
+    }
+    if (/^\s*(?:-\s*){3,}$|^\s*(?:\*\s*){3,}$|^\s*(?:_\s*){3,}$/.test(line)) {
+      out.push("<hr/>"); i++; continue;
+    }
+    if (/^\s*&gt;\s?/.test(line)) {
+      const quote = [];
+      while (i < lines.length && /^\s*&gt;\s?/.test(lines[i])) {
+        quote.push(lines[i].replace(/^\s*&gt;\s?/, "")); i++;
+      }
+      out.push("<blockquote>" + inline(quote.join("<br/>")) + "</blockquote>"); continue;
+    }
+    if (line.indexOf("|") !== -1 && i + 1 < lines.length &&
+        /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?\s*$/.test(lines[i + 1])) {
+      const cells = row => {
+        let t = row.trim();
+        if (t.charAt(0) === "|") t = t.slice(1);
+        if (t.charAt(t.length - 1) === "|") t = t.slice(0, -1);
+        return t.split("|").map(c => c.trim());
+      };
+      const head = cells(line);
+      const aligns = cells(lines[i + 1]).map(c => {
+        const l = c.charAt(0) === ":", r = c.charAt(c.length - 1) === ":";
+        return l && r ? "center" : (r ? "right" : (l ? "left" : ""));
+      });
+      const thead = "<tr>" + head.map((c, k) => {
+        const st = aligns[k] ? ' style="text-align:' + aligns[k] + '"' : "";
+        return "<th" + st + ">" + inline(c) + "</th>";
+      }).join("") + "</tr>";
+      const tb = [];
+      i += 2;
+      while (i < lines.length && lines[i].indexOf("|") !== -1 && lines[i].trim()) {
+        const row = lines[i];
+        tb.push("<tr>" + cells(row).map((c, k) => {
+          const st = aligns[k] ? ' style="text-align:' + aligns[k] + '"' : "";
+          return "<td" + st + ">" + inline(c) + "</td>";
+        }).join("") + "</tr>");
+        i++;
+      }
+      out.push('<div class="lc-md-table"><table><thead>' + thead +
+        "</thead><tbody>" + tb.join("") + "</tbody></table></div>");
+      continue;
+    }
+    if (isListMarker(line)) {
+      const tag = listTag(line);
+      const items = [];
+      while (i < lines.length && isListMarker(lines[i])) {
+        const nested = /^\s{2,}/.test(lines[i]);
+        const content = lines[i].replace(/^\s{0,3}(?:[-*+]|\d+[.)])\s+/, "");
+        if (nested && items.length) items[items.length - 1].push(inline(content));
+        else items.push([inline(content)]);
+        i++;
+      }
+      out.push("<" + tag + ">" + items.map(p => "<li>" + p.join("<br/>") + "</li>").join("") +
+        "</" + tag + ">");
+      continue;
+    }
+    const para = [];
+    while (i < lines.length && lines[i].trim() &&
+        !/^(#{1,6})\s+/.test(lines[i]) &&
+        !/^\s*&gt;/.test(lines[i]) && !isListMarker(lines[i])) {
+      const pl = lines[i];
+      if (new RegExp("^" + TOKEN_B + "(\\d+)" + TOKEN_I + "$").test(pl)) break;
+      if (pl.indexOf("|") !== -1 && i + 1 < lines.length &&
+          /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?\s*$/.test(lines[i + 1])) break;
+      para.push(pl.trim());
+      i++;
+    }
+    if (para.length) out.push("<p>" + inline(para.join("<br/>")) + "</p>");
+  }
+  return out.join("").replace(new RegExp(TOKEN_B + "(\\d+)" + TOKEN_I, "g"),
+    (_all, idx) => blockCodes[Number(idx)] || "");
+}
+
+const app = Vue.createApp({
+  template: "#lc-app-tpl",
+  data() {
+    return {
+      LC_BASE: LC_BASE,
+      token: localStorage.getItem(TOKEN_KEY) || "",
+      page: "dashboard",
+      loginPassword: "",
+      loginLoading: false,
+      saving: false,
+      uploadState: "idle", // idle | uploading | processing
+      uploadPercent: 0,
+      uploadBusy: false,
+      footerEnabled: true,
+      statIcons: LC_STAT_ICONS,
+      statColors: LC_STAT_COLORS,
+      // 表格列定义
+      convColumns: [
+        { title: "对话ID", key: "id", width: 110 },
+        { title: "访客", key: "visitor" },
+        { title: "状态", key: "status", width: 100 },
+        { title: "开始时间", key: "created_at", width: 170 },
+        { title: "最后消息", key: "updated_at", width: 170 },
+        { title: "操作", key: "action", width: 170 }
+      ],
+      docColumns: [
+        { title: "ID", dataIndex: "id", key: "id", width: 70 },
+        { title: "文件名", dataIndex: "filename", key: "filename" },
+        { title: "类型", key: "file_type", width: 90 },
+        { title: "切片数", dataIndex: "chunk_count", key: "chunk_count", width: 90 },
+        { title: "上传时间", key: "created_at", width: 170 },
+        { title: "操作", key: "action", width: 90 }
+      ],
+      // 仪表盘
+      stats: {},
+      // 对话
+      conversations: [], convTotal: 0, convPage: 1, convPageSize: 20, convStatus: "",
+      convLoading: false,
+      convDrawer: false, convMessages: [],
+      // 知识库
+      documents: [], docLoading: false,
+      // 多助手
+      scenarios: [],
+      assistants: [], assistantLoading: false,
+      assistantColumns: [
+        { title: "助手", key: "name" },
+        { title: "场景", key: "scenario", width: 120 },
+        { title: "采集", key: "collect", width: 190 },
+        { title: "启用", key: "status", width: 80 },
+        { title: "操作", key: "action", width: 300 }
+      ],
+      assistantDrawer: false, assistantEditing: "", assistantSaving: false,
+      assistantForm: {
+        id: "", name: "", description: "", scenario: "general",
+        system_prompt: "", collect_mode: "ask", collect_data_type: "custom",
+        fields: [], contextKeys: "",
+        ui: { title: "", welcome_message: "", theme: "", position: "", icon: "" }
+      },
+      fieldTypeOptions: [
+        { label: "单行文本", value: "string" },
+        { label: "多行文本", value: "text" },
+        { label: "数字", value: "number" },
+        { label: "枚举", value: "enum" },
+        { label: "电话", value: "phone" },
+        { label: "邮箱", value: "email" }
+      ],
+      dataTypeOptions: [
+        { label: "售后工单（ticket）", value: "ticket" },
+        { label: "需求（requirement）", value: "requirement" },
+        { label: "预约（appointment）", value: "appointment" },
+        { label: "自定义（custom）", value: "custom" },
+        { label: "销售线索（lead）", value: "lead" }
+      ],
+      embedModal: false, embedRecord: null,
+      // 采集数据
+      collected: [], collectedTotal: 0, collectedPage: 1, collectedPageSize: 20,
+      collectedType: "", collectedAssistant: undefined, collectedLoading: false,
+      collectedColumns: [
+        { title: "ID", dataIndex: "id", key: "id", width: 70 },
+        { title: "助手", key: "assistant", width: 140 },
+        { title: "类型", key: "data_type", width: 120 },
+        { title: "采集内容", key: "payload", ellipsis: true },
+        { title: "状态", key: "status", width: 120 },
+        { title: "时间", key: "created_at", width: 160 },
+        { title: "操作", key: "action", width: 80 }
+      ],
+      // 设置
+      settingsLoaded: false,
+      settingsForm: {
+        system_prompt: "", welcome_message: "", popup_message: "", auto_popup_delay: 3,
+        collect_guide_message: "",
+        company_name: "", business_description: "",
+        formFields: [],
+        widget_theme: "#4F46E5", widget_position: "right", widget_icon: "chat"
+      },
+      iconPresets: [
+        { key: "chat", label: "对话气泡", svg: '<svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.6 5.3 4 6.9V22l3.7-2c.7.1 1.5.2 2.3.2 5.5 0 10-3.9 10-8.7S17.5 3 12 3zm0 14.4c-.7 0-1.5-.1-2.1-.2l-2.9 1.6v-2.9C4.6 14.8 3.6 13.3 3.6 11.7 3.6 7.8 7.4 4.6 12 4.6s8.4 3.2 8.4 7.1-3.8 5.7-8.4 5.7z"/></svg>' },
+        { key: "message", label: "消息", svg: '<svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm6 5H7v-2h6v2z"/></svg>' },
+        { key: "headset", label: "客服耳机", svg: '<svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 0 0-9 9v7a3 3 0 0 0 3 3h3v-8H5v-2a7 7 0 0 1 14 0v2h-4v8h3a3 3 0 0 0 3-3v-7a9 9 0 0 0-9-9z"/></svg>' },
+        { key: "spark", label: "星光", svg: '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>' },
+        { key: "smile", label: "笑脸", svg: '<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8.3 4.6a1 1 0 0 1 1.4.2 4.2 4.2 0 0 0 6.8 0 1 1 0 1 1 1.6 1.2 6.2 6.2 0 0 1-10 0 1 1 0 0 1 .2-1.4z"/></svg>' }
+      ]
+    };
+  },
+  computed: {
+    pageTitle() {
+      const map = { dashboard: "仪表盘", assistants: "多助手管理", conversations: "对话记录", knowledge: "知识库",
+                    collected: "采集数据", settings: "系统设置" };
+      return map[this.page] || "";
+    },
+    scenarioOptions() {
+      return this.scenarios.map(s => ({ label: s.label, value: s.key }));
+    },
+    scenarioHint() {
+      const s = this.scenarios.find(x => x.key === this.assistantForm.scenario);
+      const desc = s ? s.description : "";
+      if (this.assistantEditing) return desc;
+      return desc ? desc + "（选择后自动填充话术、采集模式与字段，仍可修改）"
+                  : "新建时选择场景会自动填充话术、采集模式与字段，仍可继续修改";
+    },
+    assistantFilterOptions() {
+      return this.assistants.map(a => ({ label: a.name + "（" + a.id + "）", value: a.id }));
+    },
+    scriptEmbed() {
+      if (!this.embedRecord) return "";
+      const base = location.origin + LC_BASE;
+      const da = this.embedRecord.id === "default" ? "" : ' data-assistant="' + this.embedRecord.id + '"';
+      return '<script src="' + base + '/widget/leadchat.min.js?v=0.5.2"' + da + '><\/script>';
+    },
+    initEmbed() {
+      if (!this.embedRecord) return "";
+      const base = location.origin + LC_BASE;
+      const lines = [
+        "<script>",
+        "  window.LeadChat = window.LeadChat || [];",
+        '  window.LeadChat.push(["init", {'
+      ];
+      if (this.embedRecord.id !== "default") lines.push('    assistant: "' + this.embedRecord.id + '",');
+      lines.push("    context: { page: location.pathname, record_id: \"123\" } // 宿主业务上下文，可省略");
+      lines.push("  }]);");
+      lines.push("<\/script>");
+      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.5.2"><\/script>');
+      return lines.join("\n");
+    },
+    statCards() {
+      const s = this.stats || {};
+      return [
+        { label: "今日对话", value: s.today_conversations ?? 0, icon: this.statIcons[0] },
+        { label: "今日采集数据", value: s.today_collected ?? 0, icon: this.statIcons[1] },
+        { label: "总对话数", value: s.total_conversations ?? 0, icon: this.statIcons[2] },
+        { label: "总采集数", value: s.total_collected ?? 0, icon: this.statIcons[3] },
+        { label: "消息总数", value: s.total_messages ?? 0, icon: this.statIcons[4] },
+        { label: "知识库文档", value: s.total_documents ?? 0, icon: this.statIcons[5] }
+      ];
+    },
+    uploadHeaders() {
+      return { "X-Admin-Token": this.token };
+    },
+    isCustomIcon() {
+      const v = String(this.settingsForm.widget_icon || "").trim();
+      return v.indexOf("http") === 0 || v.indexOf("data:") === 0 || v.charAt(0) === "/";
+    },
+    embedCode() {
+      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.5.2"><\/script>';
+    }
+  },
+  mounted() {
+    window.__lc_app = this;
+    this.loadFooterEnabled();
+    if (this.token) this.switchPage("dashboard");
+  },
+  methods: {
+    async loadFooterEnabled() {
+      try {
+        const { data } = await api.get("/api/widget/config");
+        if (data && typeof data.footer_enabled === "boolean") this.footerEnabled = data.footer_enabled;
+      } catch (e) { /* 保持默认开启 */ }
+    },
+    // ---- 登录 ----
+    async doLogin() {
+      if (!this.loginPassword) { msg().warning("请输入密码"); return; }
+      this.loginLoading = true;
+      try {
+        const { data } = await api.post("/api/auth/login", { password: this.loginPassword });
+        this.token = data.token;
+        localStorage.setItem(TOKEN_KEY, data.token);
+        this.switchPage("dashboard");
+      } catch (e) {
+        msg().error(e.response && e.response.data.detail ? e.response.data.detail : "登录失败");
+      } finally {
+        this.loginLoading = false;
+      }
+    },
+    logout() {
+      localStorage.removeItem(TOKEN_KEY);
+      this.token = "";
+    },
+    // ---- 页面切换 ----
+    switchPage(p) {
+      this.page = p;
+      if (p === "dashboard") this.loadStats();
+      else if (p === "assistants") this.loadAssistants();
+      else if (p === "conversations") this.loadConversations();
+      else if (p === "knowledge") this.loadDocuments();
+      else if (p === "collected") this.loadCollected();
+      else if (p === "settings") this.loadSettings();
+    },
+    // ---- 仪表盘 ----
+    async loadStats() {
+      try {
+        const { data } = await api.get("/api/chat/stats");
+        this.stats = data;
+      } catch (e) { /* 拦截器处理 401 */ }
+    },
+    // ---- 对话记录 ----
+    onConvFilterChange() { this.convPage = 1; this.loadConversations(); },
+    async loadConversations() {
+      this.convLoading = true;
+      try {
+        const { data } = await api.get("/api/chat/conversations", {
+          params: { page: this.convPage, page_size: this.convPageSize, status: this.convStatus || undefined }
+        });
+        this.conversations = data.conversations;
+        this.convTotal = data.total;
+      } catch (e) { /* 忽略 */ } finally { this.convLoading = false; }
+    },
+    async openConversation(row) {
+      try {
+        const { data } = await api.get(`/api/chat/conversations/${row.id}/messages`);
+        this.convMessages = data.messages;
+        this.convDrawer = true;
+      } catch (e) {
+        msg().error("加载消息失败");
+      }
+    },
+    async closeConversation(row) {
+      try {
+        await api.put(`/api/chat/conversations/${row.id}/close`);
+        row.status = "closed";
+        msg().success("已结束");
+      } catch (e) {
+        msg().error("操作失败");
+      }
+    },
+    async deleteConversation(row) {
+      try {
+        await api.delete(`/api/chat/conversations/${row.id}`);
+        msg().success("已删除");
+        this.loadConversations();
+        this.loadStats();
+      } catch (e) {
+        msg().error("删除失败");
+      }
+    },
+    // ---- 知识库 ----
+    async loadDocuments() {
+      this.docLoading = true;
+      try {
+        const { data } = await api.get("/api/knowledge/documents");
+        this.documents = data.documents;
+      } catch (e) { /* 忽略 */ } finally { this.docLoading = false; }
+    },
+    beforeUpload(file) {
+      const ok = ["pdf", "docx", "txt", "md"].includes(file.name.split(".").pop().toLowerCase());
+      if (!ok) { msg().error("仅支持 PDF / DOCX / TXT / MD"); return antd.Upload.LIST_IGNORE; }
+      if (file.size > 20 * 1024 * 1024) { msg().error("文件不能超过 20MB"); return antd.Upload.LIST_IGNORE; }
+      return true;
+    },
+    onUploadChange(info) {
+      const { file } = info;
+      if (file.status === "uploading") {
+        // 阶段一：文件传输（真实百分比）；传输到 100% 后进入阶段二：服务器解析向量化
+        const pct = Math.floor(file.percent || 0);
+        this.uploadState = pct >= 100 ? "processing" : "uploading";
+        this.uploadPercent = Math.min(pct, 100);
+        this.uploadBusy = true;
+      } else if (file.status === "done") {
+        this.uploadState = "idle";
+        this.uploadBusy = false;
+        const res = file.response;
+        if (res && res.filename) {
+          msg().success(`上传成功：${res.filename}，切片 ${res.chunk_count} 段`);
+        } else {
+          msg().error((res && res.detail) || "上传失败");
+        }
+        this.loadDocuments();
+      } else if (file.status === "error") {
+        this.uploadState = "idle";
+        this.uploadBusy = false;
+        msg().error("上传失败，请重试");
+      }
+    },
+    async deleteDocument(row) {
+      try {
+        await api.delete(`/api/knowledge/documents/${row.id}`);
+        msg().success("已删除");
+        this.loadDocuments();
+      } catch (e) {
+        msg().error("删除失败");
+      }
+    },
+    // ---- 多助手 ----
+    async loadScenarios() {
+      if (this.scenarios.length) return;
+      try {
+        const { data } = await api.get("/api/assistants/templates");
+        this.scenarios = data.scenarios || [];
+      } catch (e) { /* 忽略 */ }
+    },
+    async loadAssistants() {
+      this.assistantLoading = true;
+      try {
+        await this.loadScenarios();
+        const { data } = await api.get("/api/assistants");
+        this.assistants = data.assistants || [];
+      } catch (e) { /* 拦截器处理 401 */ } finally { this.assistantLoading = false; }
+    },
+    scenarioLabel(key) {
+      const t = this.scenarios.find(s => s.key === key);
+      if (t) return t.label;
+      const map = { general: "网站助手", support: "客服助手", internal: "内部 Copilot",
+                    requirement: "需求收集助手", sales: "销售线索助手" };
+      return map[key] || key || "—";
+    },
+    dataTypeLabel(t) {
+      const map = { lead: "销售线索", ticket: "售后工单", requirement: "需求", appointment: "预约", custom: "自定义" };
+      return map[t] || t;
+    },
+    dataTypeColor(t) {
+      const map = { lead: "gold", ticket: "red", requirement: "purple", appointment: "cyan", custom: "default" };
+      return map[t] || "default";
+    },
+    assistantName(id) {
+      if (!id) return "默认助手";
+      const a = this.assistants.find(x => x.id === id);
+      return a ? a.name : id;
+    },
+    collectText(record) {
+      const c = record.collect_config || {};
+      if (c.mode === "ask") return "仅问答";
+      return "采集 · " + this.dataTypeLabel(c.data_type || "custom");
+    },
+    blankAssistantForm() {
+      return {
+        id: "", name: "", description: "", scenario: "general",
+        system_prompt: "", collect_mode: "ask", collect_data_type: "custom",
+        fields: [], contextKeys: "",
+        ui: { title: "", welcome_message: "", theme: "", position: "", icon: "" }
+      };
+    },
+    fieldRow(f) {
+      return {
+        key: f.key || "", label: f.label || "", type: f.type || "string",
+        optionsText: (f.options || []).join("，"),
+        required: !!f.required
+      };
+    },
+    prefillScenario(key) {
+      const t = this.scenarios.find(s => s.key === key);
+      if (!t) return;
+      this.assistantForm.system_prompt = t.system_prompt || "";
+      this.assistantForm.collect_mode = (t.collect && t.collect.mode) || "ask";
+      this.assistantForm.collect_data_type = (t.collect && t.collect.data_type) || "custom";
+      this.assistantForm.fields = (t.fields || []).map(this.fieldRow);
+      this.assistantForm.contextKeys = ((t.context && t.context.allowed_fields) || []).join("，");
+    },
+    onScenarioChange(key) {
+      if (this.assistantEditing) return;
+      this.prefillScenario(key);
+    },
+    async openCreateAssistant() {
+      await this.loadScenarios();
+      this.assistantEditing = "";
+      this.assistantForm = this.blankAssistantForm();
+      this.prefillScenario("general");
+      this.assistantDrawer = true;
+    },
+    addField() {
+      this.assistantForm.fields.push({ key: "", label: "", type: "string", optionsText: "", required: false });
+    },
+    async editAssistant(record) {
+      try {
+        const { data } = await api.get(`/api/assistants/${record.id}`);
+        const c = data.collect_config || {};
+        const x = data.context_config || {};
+        const u = data.ui_config || {};
+        this.assistantEditing = data.id;
+        this.assistantForm = {
+          id: data.id,
+          name: data.name,
+          description: data.description || "",
+          scenario: data.scenario,
+          system_prompt: data.system_prompt || "",
+          collect_mode: c.mode || "ask",
+          collect_data_type: c.data_type || "custom",
+          fields: (data.business_fields || []).map(this.fieldRow),
+          contextKeys: (x.allowed_fields || []).join("，"),
+          ui: {
+            title: u.title || "", welcome_message: u.welcome_message || "",
+            theme: u.theme || "", position: u.position || "", icon: u.icon || ""
+          }
+        };
+        this.assistantDrawer = true;
+      } catch (e) {
+        msg().error("加载助手失败");
+      }
+    },
+    async saveAssistant() {
+      const f = this.assistantForm;
+      if (!f.name.trim()) { msg().warning("请填写助手名称"); return; }
+      const seen = {};
+      const fields = [];
+      for (const x of f.fields) {
+        const key = (x.key || "").trim().toLowerCase();
+        if (!key) continue;
+        if (seen[key]) { msg().warning("字段标识重复：" + key); return; }
+        seen[key] = 1;
+        fields.push({
+          key: key,
+          label: (x.label || "").trim() || key,
+          type: x.type || "string",
+          options: x.type === "enum"
+            ? x.optionsText.split(/[，,、\n]/).map(s => s.trim()).filter(Boolean)
+            : [],
+          required: !!x.required
+        });
+      }
+      const contextKeys = f.contextKeys.split(/[，,、\s\n]+/).map(s => s.trim()).filter(Boolean);
+      const ui = {};
+      ["title", "welcome_message", "theme", "position", "icon"].forEach(k => {
+        const v = (f.ui[k] || "").trim();
+        if (v) ui[k] = v;
+      });
+      const payload = {
+        name: f.name.trim(),
+        description: f.description || "",
+        scenario: f.scenario,
+        system_prompt: f.system_prompt || "",
+        collect_config: { mode: f.collect_mode, data_type: f.collect_data_type },
+        context_config: { allowed_fields: contextKeys, max_keys: 20 },
+        ui_config: ui,
+        business_fields: fields
+      };
+      this.assistantSaving = true;
+      try {
+        if (this.assistantEditing) {
+          const current = this.assistants.find(a => a.id === this.assistantEditing);
+          payload.status = current ? current.status : "active";
+          await api.put(`/api/assistants/${this.assistantEditing}`, payload);
+        } else {
+          if (f.id.trim()) payload.id = f.id.trim();
+          await api.post("/api/assistants", payload);
+        }
+        msg().success("已保存");
+        this.assistantDrawer = false;
+        this.loadAssistants();
+      } catch (e) {
+        msg().error(e.response && e.response.data && e.response.data.detail ? e.response.data.detail : "保存失败");
+      } finally {
+        this.assistantSaving = false;
+      }
+    },
+    async toggleAssistantStatus(record, checked) {
+      const status = checked ? "active" : "disabled";
+      try {
+        await api.put(`/api/assistants/${record.id}`, { status });
+        record.status = status;
+        msg().success(checked ? "已启用" : "已停用");
+      } catch (e) {
+        msg().error("操作失败");
+        this.loadAssistants();
+      }
+    },
+    async setDefaultAssistant(record) {
+      try {
+        await api.put(`/api/assistants/${record.id}/default`);
+        msg().success("已设为默认助手");
+        this.loadAssistants();
+      } catch (e) {
+        msg().error("操作失败");
+      }
+    },
+    async deleteAssistant(record) {
+      try {
+        await api.delete(`/api/assistants/${record.id}`);
+        msg().success("已删除");
+        this.loadAssistants();
+      } catch (e) {
+        msg().error("删除失败");
+      }
+    },
+    openEmbed(record) {
+      this.embedRecord = record;
+      this.embedModal = true;
+    },
+    copyText(text) {
+      const done = () => msg().success("已复制");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => this.copyTextFallback(text));
+      } else {
+        this.copyTextFallback(text);
+      }
+    },
+    copyTextFallback(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); msg().success("已复制"); } catch (e) { msg().warning("复制失败，请手动选择"); }
+      document.body.removeChild(ta);
+    },
+    // ---- 采集数据 ----
+    onCollectedFilterChange() { this.collectedPage = 1; this.loadCollected(); },
+    async loadCollected() {
+      this.collectedLoading = true;
+      try {
+        if (!this.assistants.length) await this.loadAssistants();
+        const { data } = await api.get("/api/collected-data", {
+          params: {
+            page: this.collectedPage,
+            page_size: this.collectedPageSize,
+            data_type: this.collectedType || undefined,
+            assistant_id: this.collectedAssistant || undefined
+          }
+        });
+        this.collected = data.items || [];
+        this.collectedTotal = data.total || 0;
+      } catch (e) { /* 忽略 */ } finally { this.collectedLoading = false; }
+    },
+    async updateCollectedStatus(row, status) {
+      try {
+        await api.put(`/api/collected-data/${row.id}`, { status });
+        row.status = status;
+        msg().success("已更新");
+      } catch (e) {
+        msg().error("更新失败");
+      }
+    },
+    async deleteCollected(row) {
+      try {
+        await api.delete(`/api/collected-data/${row.id}`);
+        msg().success("已删除");
+        this.loadCollected();
+      } catch (e) {
+        msg().error("删除失败");
+      }
+    },
+    payloadText(payload) {
+      if (!payload) return "—";
+      const labelMap = { name: "姓名", phone: "电话", email: "邮箱", requirement: "需求描述" };
+      const keys = Object.keys(payload);
+      if (!keys.length) return "—";
+      return keys.map(k => (labelMap[k] || k) + ": " + payload[k]).join("，");
+    },
+    // ---- 设置 ----
+    async loadSettings() {
+      try {
+        const { data } = await api.get("/api/config");
+        const c = data.config;
+        this.settingsForm.system_prompt = c.system_prompt;
+        this.settingsForm.welcome_message = c.welcome_message;
+        this.settingsForm.popup_message = c.popup_message || "您好，请问有什么可以帮您吗？";
+        this.settingsForm.auto_popup_delay = c.auto_popup_delay ?? 3;
+        this.settingsForm.collect_guide_message = c.collect_guide_message;
+        this.settingsForm.company_name = c.company_name;
+        this.settingsForm.business_description = c.business_description;
+        this.settingsForm.formFields = JSON.parse(JSON.stringify(c.business_fields || []));
+        this.settingsForm.widget_theme = c.widget_theme;
+        this.settingsForm.widget_position = c.widget_position;
+        this.settingsForm.widget_icon = c.widget_icon || "chat";
+        this.settingsLoaded = true;
+      } catch (e) { /* 忽略 */ }
+    },
+    async saveSettings() {
+      const f = this.settingsForm;
+      const fields = f.formFields.filter(x => x.key && x.key.trim()).map(x => ({
+        key: x.key.trim(), label: x.label.trim() || x.key.trim(),
+        type: x.type || "string", required: !!x.required
+      }));
+      const items = {
+        system_prompt: f.system_prompt,
+        welcome_message: f.welcome_message,
+        popup_message: f.popup_message,
+        auto_popup_delay: Number(f.auto_popup_delay) || 0,
+        collect_guide_message: f.collect_guide_message,
+        company_name: f.company_name,
+        business_description: f.business_description,
+        business_fields: fields,
+        widget_theme: f.widget_theme,
+        widget_position: f.widget_position,
+        widget_icon: f.widget_icon
+      };
+      this.saving = true;
+      try {
+        for (const [key, value] of Object.entries(items)) {
+          await api.put("/api/config", { key, value });
+        }
+        msg().success("设置已保存");
+      } catch (e) {
+        msg().error("保存失败");
+      } finally {
+        this.saving = false;
+      }
+    },
+    // ---- 工具 ----
+    onIconFile(e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!/^image\//.test(file.type)) { msg().error("请选择图片文件"); return; }
+      if (file.size > 200 * 1024) { msg().error("图片不能超过 200KB"); return; }
+      const reader = new FileReader();
+      const self = this;
+      reader.onload = function () {
+        self.settingsForm.widget_icon = String(reader.result);
+        msg().success("图标已上传，点击“保存全部设置”后生效");
+      };
+      reader.readAsDataURL(file);
+    },
+    fmtTime(t) {
+      if (!t) return "—";
+      return String(t).replace("T", " ").slice(0, 16);
+    },
+    sourceNames(sources) {
+      const names = [];
+      (sources || []).forEach(s => { if (s.filename && names.indexOf(s.filename) === -1) names.push(s.filename); });
+      return names.join("、") || "—";
+    },
+    renderMd(content) { return lcRenderMarkdown(content); }
+  }
+});
+
+app.use(antd);
+app.mount("#app");
+</script>
+</body>
+</html>

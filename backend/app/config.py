@@ -14,12 +14,13 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ---- LLM 配置 ----
-    llm_provider: str = "openai"        # openai / deepseek / qwen / glm / ollama / custom
-    llm_api_key: str = ""
-    llm_api_base: str = ""              # 留空用默认；custom 时必填
-    llm_model: str = "gpt-4o-mini"
+    # ---- 对话模型 ----
+    # 对话模型全部在后台「模型管理」中配置，支持多模型在线切换，不再读取环境变量
+
+    # ---- Embedding（可选）----
     embedding_model: str = ""           # 留空则用 ChromaDB 内置本地 embedding（零配置）
+    embedding_api_key: str = ""         # 远程 embedding 密钥（本地模型留空）
+    embedding_api_base: str = ""        # 远程 embedding 端点；留空用默认
 
     # ---- 管理后台 ----
     admin_password: str = "change_this_before_running"

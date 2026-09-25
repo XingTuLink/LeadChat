@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-ARG APP_VERSION=0.5.2
+ARG APP_VERSION=0.6.0
 LABEL org.opencontainers.image.title="LeadChat" \
       org.opencontainers.image.description="Open-source Web AI Assistant：一行代码嵌入任何 Web 系统，可配置多助手 + 知识库 RAG + 业务数据采集" \
       org.opencontainers.image.version="${APP_VERSION}" \

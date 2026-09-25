@@ -107,7 +107,7 @@
   // ---- 对外 Embed API ----
   window.LeadChat = {
     __lcReady: true,
-    version: "0.5.2",
+    version: "0.6.0",
     init: function (o) { applyInit(o, true); },
     setContext: function (ctx) {
       opts.context = ctx && typeof ctx === "object" ? ctx : null;

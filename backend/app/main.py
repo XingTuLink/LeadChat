@@ -17,6 +17,7 @@ from app.routers import (
     collected_data,
     config as config_router,
     knowledge,
+    models,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -27,7 +28,7 @@ def _read_version() -> str:
     try:
         return (Path(__file__).resolve().parents[2] / "VERSION").read_text(encoding="utf-8").strip()
     except OSError:
-        return "0.5.2"
+        return "0.6.0"
 
 
 VERSION = _read_version()
@@ -36,7 +37,7 @@ VERSION = _read_version()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    logger.info("LeadChat v%s 启动完成 | LLM: %s/%s", VERSION, settings.llm_provider, settings.llm_model)
+    logger.info("LeadChat v%s 启动完成", VERSION)
     yield
 
 
@@ -71,6 +72,7 @@ app.include_router(knowledge.router)
 app.include_router(collected_data.router)
 app.include_router(assistants.router)
 app.include_router(config_router.router)
+app.include_router(models.router)
 
 # 静态资源
 ADMIN_DIR = PROJECT_ROOT / "admin"

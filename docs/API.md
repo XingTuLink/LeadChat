@@ -394,7 +394,7 @@ data: {"conversation_id":"a1b2c3…","assistant_id":"default","reply":"您好，
 ### GET /health
 
 ```json
-{ "status": "ok", "version": "0.5.2" }
+{ "status": "ok", "version": "0.6.0" }
 ```
 
 ### 静态资源

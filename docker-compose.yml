@@ -1,10 +1,10 @@
 services:
   leadchat:
-    image: leadchat:0.5.2
+    image: leadchat:0.6.0
     build:
       context: .
       args:
-        APP_VERSION: "0.5.2"
+        APP_VERSION: "0.6.0"
     container_name: leadchat
     ports:
       - "11999:11999"

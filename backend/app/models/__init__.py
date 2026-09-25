@@ -3,6 +3,7 @@ from app.models.assistant import Assistant, BusinessField, CollectedData
 from app.models.config import SystemConfig
 from app.models.conversation import Conversation
 from app.models.knowledge import KnowledgeDocument
+from app.models.llm_model import LLMModel
 from app.models.message import Message
 
 __all__ = [
@@ -12,5 +13,6 @@ __all__ = [
     "SystemConfig",
     "Conversation",
     "KnowledgeDocument",
+    "LLMModel",
     "Message",
 ]

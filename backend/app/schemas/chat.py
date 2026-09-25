@@ -39,7 +39,7 @@ class ChatMessageRequest(BaseModel):
 
 
 class ChatMessageResponse(BaseModel):
-    conversation_id: str
+    conversation_id: str | None = None
     reply: str
     sources: list[dict] = []
     assistant_id: str = "default"

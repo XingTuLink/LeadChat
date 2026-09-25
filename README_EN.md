@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.5.2-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.0-orange.svg" alt="Version"/>
 </p>
 
 **Embed an AI assistant into any web system with one line of code — conversational AI that connects users with your business.**
@@ -175,11 +175,11 @@ Code repositories (all three are kept in sync; Gitee / AtomGit work better from 
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
 cp .env.example .env
-# Edit .env: fill in LLM_API_KEY and change ADMIN_PASSWORD
+# Edit .env: at least change ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-After startup:
+After startup, open the admin panel and add a chat model under "Models", then activate it (use "Test" to verify connectivity first).
 
 | Entry point | URL |
 |---|---|
@@ -191,7 +191,7 @@ After startup:
 **Option 1: one-line script (simplest, default assistant)**
 
 ```html
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.5.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
 ```
 
 **Option 2: Embed API (specific assistant + host context; for SPAs / business systems)**
@@ -209,7 +209,7 @@ After startup:
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.5.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
 <script>
   // Context can be updated at runtime (e.g. after SPA route changes)
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -240,7 +240,7 @@ The widget derives the backend root URL from its own script URL, so same-origin 
 | `data-assistant` | Assistant ID | `default` |
 | `data-theme` | Theme color (forced; takes precedence over admin settings) | Admin setting |
 | `data-position` | Button position: `right` / `left` | Admin setting |
-| `data-icon` | Button icon: `chat` / `message` / `headset` / `sparkle` / `smile` | Admin setting |
+| `data-icon` | Button icon: `chat` / `message` / `headset` / `spark` / `smile` | Admin setting |
 | `data-title` | Window title | Company name |
 | `data-welcome` | Welcome message | Admin setting |
 
@@ -262,20 +262,23 @@ Tables are created and default settings initialized automatically on startup. On
 
 ## Supported LLM providers
 
-| Provider | `LLM_PROVIDER` | Example models | Notes |
-|--------|----------------|---------|------|
-| DeepSeek | `deepseek` | `deepseek-chat` | Good price/performance |
-| OpenAI | `openai` | `gpt-4o-mini` | |
-| Qwen | `qwen` | `qwen-plus` / `qwen-turbo` | Alibaba Cloud DashScope |
-| Zhipu GLM | `glm` | `glm-4-flash` / `glm-4-air` | Free-tier models available |
-| Ollama | `ollama` | `llama3.1` / `qwen2.5` | Fully local (set `LLM_API_BASE` to `http://host.docker.internal:11434`) |
-| Custom | `custom` | Any OpenAI-compatible model | Requires `LLM_API_BASE` |
+Add models in the admin panel ("Models"); multiple models can be switched between at any time:
 
-Embeddings can be switched to a cloud model via `EMBEDDING_MODEL`; leave it empty to use ChromaDB's built-in local model (zero config, zero API cost, data stays on your server).
+| Provider | Example models | Notes |
+|--------|---------|------|
+| DeepSeek | `deepseek-chat` | Good price/performance |
+| OpenAI | `gpt-4o-mini` | |
+| Qwen | `qwen-plus` / `qwen-turbo` | Alibaba Cloud DashScope |
+| Zhipu GLM | `glm-4-flash` / `glm-4-air` | Free-tier models available |
+| Ollama | `llama3.1` / `qwen2.5` | Fully local; inside containers use base `http://host.docker.internal:11434` |
+| Custom | Any OpenAI-compatible model | Requires a custom API base |
+
+Embeddings can be switched to a cloud model via `EMBEDDING_MODEL` (include a provider prefix, e.g. `qwen/text-embedding-v3`); leave it empty to use ChromaDB's built-in local model (zero config, zero API cost, data stays on your server).
 
 ## Admin panel
 
 - **Dashboard** — today's / total conversations, collected data, messages and document stats
+- **Models** — manage multiple chat models (provider / model ID / key / base), connectivity test, instant switching
 - **Assistants** — create from scenario templates, edit Instructions, collection mode (ask/collect) and data type, arrange business fields, context whitelist and UI overrides; generate both embed snippets with one click
 - **Conversations** — full chat history, knowledge sources cited by the AI, detail drawer; close / delete supported
 - **Knowledge base** — drag-and-drop upload with two-stage progress (transfer percentage → parsing & vectorizing), automatic chunking and vectorization
@@ -284,13 +287,10 @@ Embeddings can be switched to a cloud model via `EMBEDDING_MODEL`; leave it empt
 
 ## Configuration
 
-See [docs/CONFIG.md](docs/CONFIG.md) for the full reference.
+See [docs/CONFIG.md](docs/CONFIG.md) for the full reference. Chat models are configured under "Models" in the admin panel; model keys are no longer read from environment variables.
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `deepseek` | LLM provider |
-| `LLM_API_KEY` | — | API key |
-| `LLM_MODEL` | `deepseek-chat` | Model name |
 | `ADMIN_PASSWORD` | `change_this_before_running` | Admin password — change before first launch |
 | `DATABASE_URL` | SQLite | Switch to PostgreSQL: `postgresql+asyncpg://user:pass@host:5432/leadchat` |
 | `CORS_ORIGINS` | `*` | Allowed CORS origins |
@@ -391,7 +391,7 @@ LeadChat focuses on the Web AI Interaction Layer. It is not meant to become an A
 
 ### v0.6 — Interaction Experience
 
-- [ ] In-dashboard multi-model switching
+- [x] In-dashboard multi-model switching
 - [ ] Suggested Questions
 - [ ] Webhook / Event Webhook
 - [ ] Per-assistant model and knowledge-base configuration

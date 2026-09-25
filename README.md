@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.5.2-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.0-orange.svg" alt="Version"/>
 </p>
 
 **一行代码嵌入任何 Web 系统，用对话连接用户与业务。**
@@ -172,11 +172,11 @@ sequenceDiagram
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
 cp .env.example .env
-# 编辑 .env：填入 LLM_API_KEY，并修改 ADMIN_PASSWORD
+# 编辑 .env：至少修改 ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-启动后：
+启动后打开管理后台，在「模型管理」中添加对话模型并激活（可先点「测试」验证），挂件才能正常对话。
 
 | 入口 | 地址 |
 |---|---|
@@ -188,7 +188,7 @@ docker compose up -d --build
 **方式一：一行 script（最简，默认助手）**
 
 ```html
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.5.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
 ```
 
 **方式二：Embed API（指定助手 + 宿主业务上下文，适合 SPA / 业务系统）**
@@ -206,7 +206,7 @@ docker compose up -d --build
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.5.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
 <script>
   // 运行时也可更新上下文（如 SPA 路由切换后）
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -237,7 +237,7 @@ docker compose up -d --build
 | `data-assistant` | 助手 ID | `default`（纯问答） |
 | `data-theme` | 主题色（强制指定，优先于后台配置） | 后台配置 |
 | `data-position` | 按钮位置：`right` / `left` | 后台配置 |
-| `data-icon` | 按钮图标：`chat` / `message` / `headset` / `sparkle` / `smile` | 后台配置 |
+| `data-icon` | 按钮图标：`chat` / `message` / `headset` / `spark` / `smile` | 后台配置 |
 | `data-title` | 窗口标题 | 公司名 |
 | `data-welcome` | 欢迎语 | 后台配置 |
 
@@ -259,20 +259,23 @@ uvicorn app.main:app --reload --port 11999
 
 ## 支持的大模型
 
-| 提供商 | `LLM_PROVIDER` | 模型示例 | 说明 |
-|--------|----------------|---------|------|
-| DeepSeek | `deepseek` | `deepseek-chat` | 性价比高 |
-| OpenAI | `openai` | `gpt-4o-mini` | |
-| 通义千问 | `qwen` | `qwen-plus` / `qwen-turbo` | 阿里云 DashScope |
-| 智谱 | `glm` | `glm-4-flash` / `glm-4-air` | 有免费模型 |
-| Ollama | `ollama` | `llama3.1` / `qwen2.5` | 完全本地（`LLM_API_BASE` 填 `http://host.docker.internal:11434`） |
-| 自定义 | `custom` | 任意 OpenAI 兼容模型 | 需配置 `LLM_API_BASE` |
+在后台「模型管理」中添加，支持多个模型在线切换：
 
-Embedding 可通过 `EMBEDDING_MODEL` 切换为云端模型；留空则使用 ChromaDB 内置本地模型（零配置、零 API 成本、数据不出服务器）。
+| 厂商 | 模型示例 | 说明 |
+|--------|---------|------|
+| DeepSeek | `deepseek-chat` | 性价比高 |
+| OpenAI | `gpt-4o-mini` | |
+| 通义千问 | `qwen-plus` / `qwen-turbo` | 阿里云 DashScope |
+| 智谱 | `glm-4-flash` / `glm-4-air` | 有免费模型 |
+| Ollama | `llama3.1` / `qwen2.5` | 完全本地；容器内端点填 `http://host.docker.internal:11434` |
+| 自定义 | 任意 OpenAI 兼容模型 | 需自行填写 API 端点 |
+
+Embedding 通过 `EMBEDDING_MODEL` 配置云端模型（建议带厂商前缀，如 `qwen/text-embedding-v3`）；留空则使用 ChromaDB 内置本地模型，零配置、零 API 成本、数据不出服务器。
 
 ## 管理后台
 
 - **仪表盘** — 今日/累计对话、采集数据、消息、文档统计
+- **模型管理** — 添加多个对话模型（厂商/模型标识/密钥/端点），连通性测试，在线切换立即生效
 - **助手管理** — 按场景模板新建助手、Instructions 编辑、采集模式（ask/collect）与数据类型、业务字段编排、上下文白名单、外观覆盖；一键生成两种嵌入代码
 - **对话记录** — 完整聊天过程、AI 引用的知识来源、对话详情抽屉；支持结束/删除
 - **知识库** — 拖拽上传（两阶段进度：传输百分比 → 解析向量化中），自动切片向量化
@@ -281,13 +284,10 @@ Embedding 可通过 `EMBEDDING_MODEL` 切换为云端模型；留空则使用 Ch
 
 ## 核心配置
 
-完整说明见 [docs/CONFIG.md](docs/CONFIG.md)。
+完整说明见 [docs/CONFIG.md](docs/CONFIG.md)。对话模型在后台「模型管理」配置，环境变量中不再包含模型密钥。
 
 | 环境变量 | 默认 | 说明 |
 |---|---|---|
-| `LLM_PROVIDER` | `deepseek` | 模型提供商 |
-| `LLM_API_KEY` | — | API 密钥 |
-| `LLM_MODEL` | `deepseek-chat` | 模型名称 |
 | `ADMIN_PASSWORD` | `change_this_before_running` | 后台管理密码，首次启动前务必修改 |
 | `DATABASE_URL` | SQLite | 换 PostgreSQL：`postgresql+asyncpg://user:pass@host:5432/leadchat` |
 | `CORS_ORIGINS` | `*` | 允许跨域来源 |
@@ -388,7 +388,7 @@ LeadChat 专注于 Web AI Interaction Layer，目标不是做 AI 中台或 Agent
 
 ### v0.6 — Interaction Experience
 
-- [ ] 多模型在线切换
+- [x] 多模型在线切换
 - [ ] 快捷问题（Suggested Questions）
 - [ ] Webhook / Event Webhook
 - [ ] 助手独立模型与知识库配置

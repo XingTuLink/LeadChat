@@ -16,6 +16,7 @@ from app.services import (
     context as context_service,
     data_collector,
     llm,
+    model_store,
     rag,
 )
 
@@ -88,6 +89,12 @@ async def _prepare_turn(
     global_cfg = await config_store.get_all_config(session)
     cfg = await assistant_store.runtime_config(session, assistant, global_cfg)
 
+    # 0.05 当前激活的全局对话模型（未配置时对话无法进行）
+    active_model = await model_store.get_active(session)
+    if active_model is None:
+        raise llm.ModelNotConfiguredError("后台未配置激活的对话模型")
+    model_cfg = model_store.to_dict(active_model, masked=False)
+
     # 0.1 业务上下文：白名单清洗后随对话持久化并注入 Prompt
     safe_context = context_service.sanitize_context(
         context, assistant_store.get_context_config(assistant)
@@ -143,6 +150,7 @@ async def _prepare_turn(
         "sources": sources,
         "collection": collection,
         "llm_messages": llm_messages,
+        "model_cfg": model_cfg,
     }
 
 
@@ -173,11 +181,26 @@ async def process_message(
 ) -> dict:
     """处理一条用户消息，返回 AI 回复与业务信息采集状态（非流式）"""
     async with AsyncSessionLocal() as session:
-        prepared = await _prepare_turn(
-            session, conversation_id, message, visitor_id, website_id, assistant_id, context
-        )
         try:
-            reply = await llm.chat_completion(prepared["llm_messages"])
+            prepared = await _prepare_turn(
+                session, conversation_id, message, visitor_id, website_id, assistant_id, context
+            )
+        except llm.ModelNotConfiguredError:
+            # 未配置/激活模型：本次会话不提交，返回友好提示
+            return {
+                "conversation_id": None,
+                "assistant_id": "default",
+                "reply": "抱歉，AI 助手尚未配置完成，请稍后再试。",
+                "sources": [],
+                "data_captured": False,
+                "data_type": None,
+            }
+        try:
+            reply = await llm.chat_completion(
+                prepared["llm_messages"], model_cfg=prepared["model_cfg"]
+            )
+        except llm.ModelNotConfiguredError:
+            reply = "抱歉，AI 助手尚未配置完成，请稍后再试。"
         except Exception as e:
             logger.exception("LLM 调用失败: %s", e)
             reply = "抱歉，AI服务暂时不可用，请稍后再试。"
@@ -246,7 +269,9 @@ async def process_message_stream(
         try:
             stream_failed = False
             try:
-                async for piece in llm.chat_completion_stream(prepared["llm_messages"]):
+                async for piece in llm.chat_completion_stream(
+                    prepared["llm_messages"], model_cfg=prepared["model_cfg"]
+                ):
                     parts.append(piece)
                     yield "delta", {"content": piece}
             except Exception as e:  # noqa: BLE001

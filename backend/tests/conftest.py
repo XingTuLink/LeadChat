@@ -31,6 +31,20 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def _init_database():
     await init_db()
+    # 播种一个激活模型，保证全部对话类测试的默认前置（多模型管理接口另有专项测试）
+    from app.services import model_store
+
+    async with AsyncSessionLocal() as seed_session:
+        if await model_store.get_active(seed_session) is None:
+            await model_store.create_model(seed_session, {
+                "id": "test-active-model",
+                "name": "测试激活模型",
+                "provider": "openai",
+                "model_name": "gpt-test",
+                "api_key": "sk-test-1234567890abcdef",
+                "api_base": "",
+                "is_active": True,
+            })
     yield
 
 

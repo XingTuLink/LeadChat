@@ -1,14 +1,32 @@
 # LeadChat 配置说明
 
-## 一、环境变量（.env）
+## 一、对话模型（后台「模型管理」）
+
+对话模型不通过环境变量配置。启动后登录管理后台，在「模型管理」中添加模型并激活：
+
+- 可添加任意多个模型；同一时刻只有一个模型生效，点击「激活」立即切换，无需重启服务；
+- 保存时可点击「测试」先验证连通性；
+- 模型列表中 API Key 以掩码显示（保留前 4 后 4），编辑时 Key 留空表示不修改；
+- 未激活任何模型时，对话接口返回友好提示，对话功能不可用。
+
+### 支持的厂商与默认端点
+
+| 厂商 | 模型标识示例 | 默认 API Base |
+|------|------------|--------------|
+| openai | `gpt-4o-mini` | OpenAI 官方端点 |
+| deepseek | `deepseek-chat` | `https://api.deepseek.com` |
+| qwen | `qwen-plus` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| glm | `glm-4-flash` | `https://open.bigmodel.cn/api/paas/v4` |
+| ollama | `qwen2.5` | `http://localhost:11434`（容器内填 `http://host.docker.internal:11434`） |
+| custom | 任意 OpenAI 兼容模型 | 需自行填写 API 端点 |
+
+## 二、环境变量（.env）
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `openai` | 模型提供商：`openai` / `deepseek` / `qwen` / `glm` / `ollama` / `custom` |
-| `LLM_API_KEY` | 空 | API 密钥 |
-| `LLM_API_BASE` | 空 | 自定义 API 地址；留空用默认；`custom` 时必填；Docker 内用 Ollama 填 `http://host.docker.internal:11434` |
-| `LLM_MODEL` | `gpt-4o-mini` | 模型名称 |
 | `EMBEDDING_MODEL` | 空 | Embedding 模型；留空用 ChromaDB 内置本地模型 |
+| `EMBEDDING_API_KEY` | 空 | 远程 Embedding 密钥；本地模型留空 |
+| `EMBEDDING_API_BASE` | 空 | 远程 Embedding 端点；留空用默认 |
 | `ADMIN_PASSWORD` | `change_this_before_running` | 管理后台密码，**首次启动前务必修改** |
 | `DATABASE_URL` | SQLite | 数据库连接串；PostgreSQL 示例 `postgresql+asyncpg://user:pass@host:5432/leadchat` |
 | `CORS_ORIGINS` | `*` | 允许跨域来源，逗号分隔 |
@@ -19,22 +37,9 @@
 | `RAG_TOP_K` | `3` | 每次检索返回的相关片段数 |
 | `HISTORY_ROUNDS` | `10` | 携带的历史对话轮数 |
 
-### 各提供商默认端点
+> ⚠️ **中文场景提示**：内置本地 embedding 模型（all-MiniLM-L6-v2）为英文模型，中文语义检索效果较差。中文知识库建议配置中文 Embedding 模型，例如通义 `qwen/text-embedding-v3`、智谱 `glm/embedding-3`，或 Ollama 本地模型 `ollama/bge-m3`。
 
-| 提供商 | 默认 API Base | 推荐 Embedding 模型 |
-|--------|--------------|--------------------|
-| openai | OpenAI 官方 | `text-embedding-3-small` |
-| deepseek | DeepSeek 官方 | 不提供，建议配 `qwen` 或 `glm` 的 Embedding |
-| qwen | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `text-embedding-v3` |
-| glm | `https://open.bigmodel.cn/api/paas/v4` | `embedding-3` |
-| ollama | `http://localhost:11434` | `nomic-embed-text` |
-| custom | 必填 `LLM_API_BASE` | 按提供商要求 |
-
-> 注：DeepSeek 目前没有 Embedding API。若用 DeepSeek 对话，可另配 Embedding（`EMBEDDING_MODEL` 走同一 `LLM_API_KEY`/`LLM_API_BASE`），或留空使用本地内置模型。
->
-> ⚠️ **中文场景重要提示**：内置本地 embedding 模型（all-MiniLM-L6-v2）为英文模型，中文语义检索效果较差。**中文知识库强烈建议配置中文效果好的 Embedding 模型**，例如通义 `text-embedding-v3` 或智谱 `embedding-3`，或 Ollama 本地模型 `bge-m3`（`ollama/bge-m3`）。
-
-## 二、挂件参数（script 标签 data-* 属性）
+## 三、挂件参数（script 标签 data-* 属性）
 
 ```html
 <script src="https://chat.example.com/widget/leadchat.min.js"
@@ -67,7 +72,7 @@
     context: { page: location.pathname, order_id: "O-009" }
   }]);
 </script>
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.5.2"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.0"></script>
 ```
 
 运行期可随时调用 `LeadChat.setContext({...})` 更新（如 SPA 路由切换），详见 README「嵌入任意 Web 系统」。
@@ -78,9 +83,9 @@
 - 欢迎气泡每会话弹一次，关闭后本会话不再出现
 - 移动端（<480px）聊天窗口自动全屏
 
-## 三、后台配置项（系统设置页）
+## 四、后台配置项（系统设置页）
 
-> 本页配置即**默认助手（`default`，通用问答场景）**的全局回退：默认助手未单独配置的话术、外观、业务字段都继承这里。v0.5 起默认助手为 ASK 模式的通用助手，不预设任何销售语义；v0.5.1 起全局业务字段默认为空数组——新部署开箱即纯问答，不索取姓名/电话/邮箱等任何信息。
+> 本页配置是默认助手（`default`）的全局回退：默认助手未单独配置的话术、外观、业务字段都继承这里。默认助手开箱即纯问答，全局业务字段默认为空数组，不索取姓名、电话等信息。
 
 | 配置项 | 说明 |
 |--------|------|
@@ -111,7 +116,7 @@
 
 > RAG 检索结果会自动以【参考资料】段落注入，无需在提示词中重复说明。
 
-## 四、多助手与业务数据采集（v0.4）
+## 五、多助手与业务数据
 
 一个 LeadChat 实例可托管多个助手（可配置 AI Assistant），分别嵌入不同页面/系统。在后台「多助手」页管理，接口详见 [API.md](API.md)。
 

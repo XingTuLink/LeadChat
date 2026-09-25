@@ -1,4 +1,8 @@
-"""LLM 调用封装：通过 LiteLLM 统一对接 OpenAI / DeepSeek / 通义千问 / 智谱 / Ollama 等"""
+"""LLM 调用封装：通过 LiteLLM 统一对接 OpenAI / DeepSeek / 通义千问 / 智谱 / Ollama 等
+
+对话模型配置来自后台「模型管理」（数据库，支持多模型在线切换），
+调用方必须显式传入激活模型的配置；Embedding 仍由环境变量配置。
+"""
 import logging
 
 import litellm
@@ -20,12 +24,21 @@ PROVIDER_DEFAULT_BASES = {
 }
 
 
-def _resolve(model: str | None = None) -> tuple[str, str | None, str | None]:
-    """解析为 LiteLLM 模型标识。返回 (model, api_key, api_base)"""
-    provider = (settings.llm_provider or "openai").strip().lower()
-    model = (model or settings.llm_model).strip()
-    api_key = settings.llm_api_key or None
-    api_base = settings.llm_api_base or None
+class ModelNotConfiguredError(RuntimeError):
+    """后台未配置/激活对话模型"""
+
+
+def _chat_target(
+    model_cfg: dict,
+) -> tuple[str, str | None, str | None]:
+    """将后台模型配置解析为 LiteLLM 模型标识。返回 (model, api_key, api_base)"""
+    provider = str(model_cfg.get("provider") or "openai").strip().lower()
+    model = str(model_cfg.get("model_name") or "").strip()
+    api_key = str(model_cfg.get("api_key") or "").strip() or None
+    api_base = str(model_cfg.get("api_base") or "").strip() or None
+
+    if not model:
+        raise ValueError("模型标识不能为空")
 
     if provider in ("", "openai"):
         litellm_model = model if model.startswith("openai/") else f"openai/{model}"
@@ -41,16 +54,25 @@ def _resolve(model: str | None = None) -> tuple[str, str | None, str | None]:
         litellm_model = f"ollama/{model}"
         api_base = api_base or PROVIDER_DEFAULT_BASES["ollama"]
     elif provider in ("custom", "openai_compatible", "compatible"):
-        litellm_model = f"openai/{model}"  # 需自行配置 LLM_API_BASE
+        litellm_model = f"openai/{model}"  # 需自行配置 api_base
     else:
         litellm_model = f"openai/{model}"
 
     return litellm_model, api_key, api_base
 
 
-async def chat_completion(messages: list[dict], temperature: float = 0.7) -> str:
-    """调用大模型，返回回复文本（非流式）"""
-    model, api_key, api_base = _resolve()
+async def chat_completion(
+    messages: list[dict],
+    temperature: float = 0.7,
+    model_cfg: dict | None = None,
+) -> str:
+    """调用大模型，返回回复文本（非流式）
+
+    model_cfg 为后台激活模型的完整配置（含未掩码 api_key）。
+    """
+    if not model_cfg:
+        raise ModelNotConfiguredError("未配置激活模型")
+    model, api_key, api_base = _chat_target(model_cfg)
     response = await litellm.acompletion(
         model=model,
         messages=messages,
@@ -62,12 +84,19 @@ async def chat_completion(messages: list[dict], temperature: float = 0.7) -> str
     return response.choices[0].message.content or ""
 
 
-async def chat_completion_stream(messages: list[dict], temperature: float = 0.7):
+async def chat_completion_stream(
+    messages: list[dict],
+    temperature: float = 0.7,
+    model_cfg: dict | None = None,
+):
     """调用大模型并逐 token 产出文本增量（SSE 流式对话使用）
 
     yields: 每个 chunk 的增量字符串（可能为空串，调用方可忽略）
+    model_cfg 为后台激活模型的完整配置（含未掩码 api_key）。
     """
-    model, api_key, api_base = _resolve()
+    if not model_cfg:
+        raise ModelNotConfiguredError("未配置激活模型")
+    model, api_key, api_base = _chat_target(model_cfg)
     stream = await litellm.acompletion(
         model=model,
         messages=messages,
@@ -95,11 +124,26 @@ async def chat_completion_stream(messages: list[dict], temperature: float = 0.7)
                 pass
 
 
+# ---------------------------------------------------------------- Embedding
+
+def _embedding_target(
+    model: str,
+) -> tuple[str, str | None, str | None]:
+    """解析远程 embedding 模型：含厂商前缀（openai/xxx）直接使用，否则按 OpenAI 处理"""
+    m = model.strip()
+    litellm_model = m if "/" in m else f"openai/{m}"
+    return (
+        litellm_model,
+        settings.embedding_api_key or None,
+        settings.embedding_api_base or None,
+    )
+
+
 async def get_embeddings(texts: list[str]) -> list[list[float]]:
     """批量获取文本向量（需配置 EMBEDDING_MODEL）"""
     if not settings.embedding_model:
         raise RuntimeError("EMBEDDING_MODEL 未配置")
-    model, api_key, api_base = _resolve(settings.embedding_model)
+    model, api_key, api_base = _embedding_target(settings.embedding_model)
     response = await litellm.aembedding(
         model=model,
         input=texts,

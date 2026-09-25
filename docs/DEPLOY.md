@@ -11,11 +11,18 @@
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
 cp .env.example .env
-vi .env        # 至少配置 LLM_PROVIDER、LLM_API_KEY、ADMIN_PASSWORD
+vi .env        # 至少修改 ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
 启动后：
+
+1. 打开 `http://your-server:11999/admin`，用 `ADMIN_PASSWORD` 登录；
+2. 在「模型管理」中添加对话模型（厂商、模型标识、API Key），点击「测试」验证后「激活」；
+3. 需要知识库时在「知识库」上传文档；
+4. 把挂件嵌入代码放到你的网站，开始使用。
+
+未激活任何模型时对话功能不可用。
 
 | 地址 | 用途 |
 |------|------|
@@ -27,13 +34,13 @@ docker compose up -d --build
 
 ```bash
 git pull
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### 查看日志
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ## 本地开发运行
@@ -111,10 +118,10 @@ tar czf leadchat-backup-$(date +%F).tar.gz data/
 
 ### 1. Ollama 在 Docker 中连不上
 
-容器内 `localhost` 指向容器自身。`.env` 中改为：
+容器内 `localhost` 指向容器自身。在后台「模型管理」编辑该模型时，把 API 端点填为：
 
-```env
-LLM_API_BASE=http://host.docker.internal:11434
+```
+http://host.docker.internal:11434
 ```
 
 Linux 宿主机需在 `docker-compose.yml` 中追加：
@@ -129,13 +136,15 @@ Linux 宿主机需在 `docker-compose.yml` 中追加：
 未配置 `EMBEDDING_MODEL` 时使用 ChromaDB 内置本地模型，首次使用需从网络下载（约 80MB）。如服务器网络受限，请配置云厂商 Embedding 模型，例如：
 
 ```env
-EMBEDDING_MODEL=text-embedding-v3
+EMBEDDING_MODEL=qwen/text-embedding-v3
+EMBEDDING_API_KEY=你的密钥
 ```
 
 ### 3. 挂件显示了但发消息报"网络异常"
 
 - 检查 `data-api` 地址是否可从访客浏览器访问（不能用 localhost）
-- 检查 LLM API Key 是否正确：`docker-compose logs` 查看后端报错
+- 在后台「模型管理」点「测试」，检查模型配置与 API Key
+- `docker compose logs` 查看后端报错
 - HTTPS 网站必须使用 HTTPS 的 `data-api`（见上文反向代理）
 
 ### 4. 如何切换到 PostgreSQL

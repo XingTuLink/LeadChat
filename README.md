@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.6.2-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.3-orange.svg" alt="Version"/>
 </p>
 
 **一行代码嵌入任何 Web 系统，用对话连接用户与业务。**
@@ -59,10 +59,12 @@ LeadChat 是一个开源的 Web AI 助手（Web AI Interaction Layer）：官网
 
 ### 挂件
 
-- **一行代码嵌入** — 单文件原生 JS（约 45KB），无运行时依赖；内置安全 Markdown 渲染器
+- **一行代码嵌入** — 单文件原生 JS（约 50KB），无运行时依赖；内置安全 Markdown 渲染器
 - **Embed API** — `LeadChat.init({ assistant, context, theme, mode, ... })` 程序化接入，支持脚本加载前队列调用；旧 `data-*` 属性写法继续兼容
 - **小窗 / 全屏双模式** — 标题栏一键切换全屏，支持 `data-mode` 与 API 指定；访客选择本机记忆
 - **可拖拽** — 浮动按钮和小窗标题栏均可自由拖动（鼠标/触摸），自动贴边不出屏，位置本机记忆
+- **快捷问题** — 每个助手可配置常见问题，访客打开窗口一键提问；只在全新对话里出现，发出第一条消息后自动收起
+- **移动端适配** — 手机竖屏自动全屏铺满、触屏横屏矮窗同样铺满，内部尺寸按 vw/vh 随视口缩放；适配刘海屏安全区、iOS 输入框防聚焦缩放与软键盘（dvh），Pad 沿用浮窗布局
 - **可配置外观** — 主题色、按钮图标（5 个预设加自定义上传）、位置、标题、欢迎语；每个助手可独立覆盖
 - **悬浮色自动计算** — 悬浮色由主题色经 HSL 算法生成（亮色加深、深色提亮）
 - **Shadow DOM 隔离** — 与宿主页面样式互不污染
@@ -191,10 +193,10 @@ docker compose up -d --build
 
 ```html
 <!-- 默认助手：不带助手标识 -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3"></script>
 
 <!-- 指定助手：加 data-assistant 标识即可；后台「多助手」列表每个助手都有可复制的嵌入代码 -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2" data-assistant="support"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3" data-assistant="support"></script>
 ```
 
 每个助手拥有独立的话术、欢迎语、自动弹出、外观与采集规则（未自定义项继承系统设置）。因此**一个 LeadChat 实例可同时服务多个网站/系统**：不同站点嵌不同助手，或多个站点共用同一助手；标识无效或助手停用时自动回退默认助手。
@@ -214,7 +216,7 @@ docker compose up -d --build
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3"></script>
 <script>
   // 运行时也可更新上下文（如 SPA 路由切换后）
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -236,12 +238,16 @@ docker compose up -d --build
 | `LeadChat.setMode(mode)` | 切换窗口模式：`"window"` 小窗 / `"fullscreen"` 全屏 |
 | `LeadChat.toggleFullscreen()` | 在小窗 / 全屏之间切换 |
 
-`init` 参数：`assistant`（ID 字符串或 `{ id }`）、`context`、`api`、`theme`、`position`、`title`、`welcome`、`icon`、`mode`（`"window"` / `"fullscreen"`，也可写 `fullscreen: true`）。
+`init` 参数：`assistant`（ID 字符串或 `{ id }`）、`context`、`api`、`theme`、`position`、`title`、`welcome`、`icon`、`questions`（快捷问题字符串数组，覆盖后台配置）、`mode`（`"window"` / `"fullscreen"`，也可写 `fullscreen: true`）。
 
 **窗口模式与拖拽（v0.6.2）**
 
 - **小窗 / 全屏**：聊天窗标题栏右侧新增全屏按钮，访客可一键把窗口铺满整个浏览器；选择会记在本机，下次打开保持。宿主也可用 `data-mode="fullscreen"` 或 `init({ mode: "fullscreen" })` 指定初始模式。移动端（≤480px）小窗本身即全屏展示。按 `Esc` 可收起窗口。
 - **拖拽**：浮动按钮和小窗标题栏都可以拖动，窗口、气泡自动跟随并不超出屏幕边缘；松手后位置记在本机，下次打开仍在原处（清浏览器缓存即复位）。全屏模式下不可拖拽。
+
+**快捷问题（v0.6.3）**
+
+在「多助手 → 编辑助手 → 接待设置」里配置，一行一个，最多 6 条（每条 60 字内，自动去空去重）；留空则不显示。访客打开窗口时问题以胶囊按钮出现在输入框上方，点击即作为该问题发送。只在**全新对话**中出现——有历史消息回放时不打扰，发出第一条消息后自动收起。宿主也可用 `init({ questions: [...] })` 在页面端覆盖（页面端优先于后台配置）。
 
 **旧版 data-* 属性（继续支持）**
 
@@ -404,11 +410,12 @@ LeadChat 专注于 Web AI Interaction Layer，目标不是做 AI 中台或 Agent
 - [x] v0.6.0 多模型在线切换、厂商化模型管理、内置本地 Embedding
 - [x] v0.6.1 正在提高 LeadChat 的易用性：零配置开箱即用、模型服务按公有/私有分组并配真实品牌图标、后台配置傻瓜化
 - [x] v0.6.2 挂件交互体验：小窗/全屏双模式、浮动按钮与标题栏可拖拽（位置记忆、自动不出屏）、Esc 收起、Embed API 模式控制
+- [x] v0.6.3 快捷问题：按助手配置常见问题，访客打开窗口一键提问
 
 ### v0.6 — Interaction Experience
 
 - [x] 多模型在线切换
-- [ ] 快捷问题（Suggested Questions）
+- [x] 快捷问题（Suggested Questions）（v0.6.3）
 - [ ] Webhook / Event Webhook
 - [ ] 助手独立模型与知识库配置
 - [ ] Embed API 增强

@@ -34,16 +34,18 @@ function onWindowOpened() {
   var welcome = (__lc_ui && __lc_ui.welcome) || "您好，请问有什么可以帮您吗？";
 
   if (!LC_STATE.conversationId) {
-    // 全新访客：直接展示欢迎语
+    // 全新访客：直接展示欢迎语 + 快捷问题
     __lc_ui.appendMessage(false, welcome);
+    lcShowSuggestions();
     return;
   }
   apiGetMessages(LC_STATE.conversationId)
     .then(function (res) {
       var msgs = res.messages || [];
       if (!msgs.length) {
-        // 新会话无历史：第一条自动显示欢迎语
+        // 新会话无历史：第一条自动显示欢迎语 + 快捷问题
         __lc_ui.appendMessage(false, welcome);
+        lcShowSuggestions();
       } else {
         msgs.forEach(function (m) {
           if (m.role === "user") __lc_ui.appendMessage(true, m.content);
@@ -54,10 +56,16 @@ function onWindowOpened() {
     .catch(function () { __lc_ui.appendMessage(false, welcome); });
 }
 
+// 快捷问题只在「确认是全新对话」时展示（历史回放时展示没有意义）
+function lcShowSuggestions() {
+  if (__lc_ui && __lc_ui.showSuggestions) __lc_ui.showSuggestions();
+}
+
 function lcSendMessage() {
   var ui = __lc_ui.ui;
   var text = ui.input.value.trim();
   if (!text || LC_STATE.sending) return;
+  if (__lc_ui.hideSuggestions) __lc_ui.hideSuggestions();
   LC_STATE.sending = true;
   ui.sendBtn.disabled = true;
   ui.input.value = "";

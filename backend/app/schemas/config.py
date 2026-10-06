@@ -21,6 +21,8 @@ class WidgetConfigResponse(BaseModel):
     widget_theme: str = "#4F46E5"
     widget_position: str = "right"
     widget_icon: str = "chat"
+    # 快捷问题：访客打开窗口时可一键提问（按助手配置，未配置为空数组）
+    suggested_questions: list[str] = []
     # 通用业务字段（ASK 模式下仅为字段定义，不触发采集）
     business_fields: list[dict] = []
     footer_enabled: bool = True

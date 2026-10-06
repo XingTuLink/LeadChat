@@ -21,6 +21,22 @@ var LC_ICONS = {
   smile: '<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8.3 4.6a1 1 0 0 1 1.4.2 4.2 4.2 0 0 0 6.8 0 1 1 0 1 1 1.6 1.2 6.2 6.2 0 0 1-10 0 1 1 0 0 1 .2-1.4z"/></svg>'
 };
 
+// 快捷问题规范化：接受数组或换行分隔字符串，去空去重，最多 6 条、每条 60 字
+function lcNormalizeQuestions(value) {
+  var items;
+  if (typeof value === "string") items = value.split(/[\r\n]+/);
+  else if (Object.prototype.toString.call(value) === "[object Array]") items = value;
+  else return [];
+  var out = [];
+  for (var i = 0; i < items.length; i++) {
+    var text = String(items[i] == null ? "" : items[i]).trim().slice(0, 60);
+    if (!text || out.indexOf(text) !== -1) continue;
+    out.push(text);
+    if (out.length >= 6) break;
+  }
+  return out;
+}
+
 // 图标值 → HTML：预设 key 直接映射；http/data:/ 以 / 开头视为图片地址
 function lcFabIconHtml(icon) {
   var v = String(icon == null ? "" : icon).trim();
@@ -83,6 +99,11 @@ function initWidget(opts, remote) {
   if (isNaN(popupDelay) || popupDelay < 0) popupDelay = 0;
   var icon = opts.icon || (remote && remote.widget_icon) || "chat";
   var footerEnabled = !(remote && remote.footer_enabled === false);
+  // 快捷问题：页面端 init/data 覆盖优先，其次助手配置，未配置则不展示
+  var questions = lcNormalizeQuestions(
+    opts.questions && opts.questions.length ? opts.questions : (remote && remote.suggested_questions)
+  );
+  var suggestDismissed = false;
   // 结构化业务字段由后端在对话中自动采集，挂件不渲染任何表单
 
   // 宿主元素 + Shadow DOM
@@ -114,6 +135,12 @@ function initWidget(opts, remote) {
     '    </div>' +
     "  </div>" +
     '  <div class="lc-messages"></div>' +
+    (questions.length
+      ? '  <div class="lc-suggest" style="display:none">' +
+        '    <div class="lc-suggest-title">你可以这样问</div>' +
+        '    <div class="lc-suggest-list"></div>' +
+        "  </div>"
+      : "") +
     '  <div class="lc-footer">' +
     '    <input class="lc-input" type="text" placeholder="输入您的问题..."/>' +
     '    <button class="lc-send" aria-label="发送">' + LC_SVG_SEND + "</button>" +
@@ -140,8 +167,26 @@ function initWidget(opts, remote) {
     input: root.querySelector(".lc-input"),
     sendBtn: root.querySelector(".lc-send"),
     bubbleClose: root.querySelector(".lc-bubble-close"),
-    bubbleText: root.querySelector(".lc-bubble-text")
+    bubbleText: root.querySelector(".lc-bubble-text"),
+    suggest: root.querySelector(".lc-suggest"),
+    suggestList: root.querySelector(".lc-suggest-list")
   };
+
+  // 快捷问题按钮：点击即等同访客输入该问题并发送
+  if (ui.suggestList) {
+    questions.forEach(function (text) {
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "lc-suggest-item";
+      item.textContent = text;
+      item.addEventListener("click", function () {
+        hideSuggestions();
+        ui.input.value = text;
+        ui.sendBtn.click();
+      });
+      ui.suggestList.appendChild(item);
+    });
+  }
 
   // ---------- 行为 ----------
   function scrollBottom() {
@@ -233,11 +278,23 @@ function initWidget(opts, remote) {
     }
   }
 
+  // 快捷问题：由 chat.js 在「确认是全新对话」时调用展示，避免历史会话重复出现
+  function showSuggestions() {
+    if (!ui.suggest || suggestDismissed) return;
+    ui.suggest.style.display = "flex";
+  }
+  function hideSuggestions() {
+    suggestDismissed = true;
+    if (ui.suggest) ui.suggest.style.display = "none";
+  }
+
   function openWindow() {
     root.classList.add("lc-root--open");
     ui.window.classList.remove("lc-window--hidden");
     hideBubble();
-    ui.input.focus();
+    // 仅精确指针（鼠标）自动聚焦；触屏端聚焦会强制弹出软键盘，访客可能只想先看欢迎语
+    var finePointer = !window.matchMedia || window.matchMedia("(pointer: fine)").matches;
+    if (finePointer) ui.input.focus();
     if (typeof onWindowOpened === "function") onWindowOpened();
   }
   function closeWindow() {
@@ -446,6 +503,8 @@ function initWidget(opts, remote) {
     hideTyping: hideTyping,
     openWindow: openWindow,
     closeWindow: closeWindow,
+    showSuggestions: showSuggestions,
+    hideSuggestions: hideSuggestions,
     setMode: setWindowMode,
     toggleFullscreen: toggleFullscreen,
     welcome: welcome,

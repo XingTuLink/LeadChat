@@ -54,6 +54,44 @@ async def test_widget_config_exposes_no_capture_fields(client):
         assert word not in data["welcome_message"]
 
 
+async def test_suggested_questions_passthrough_and_sanitize(client, admin_headers):
+    """v0.6.3：快捷问题按助手配置下发；去空去重、上限 6 条"""
+    created = await client.post("/api/assistants", headers=admin_headers, json={
+        "id": "quick-q-bot", "name": "问答助手", "scenario": "general",
+        "ui_config": {"suggested_questions": [
+            "你们支持私有化部署吗？", "  ", "你们支持私有化部署吗？",
+            "如何接入我的网站？", "有哪些模型可选？", "价格怎么算？", "支持离线运行吗？",
+            "有没有 API 文档？", "能对接企业微信吗？",
+        ]},
+    })
+    assert created.status_code == 201, created.text
+    assert created.json()["ui_config"]["suggested_questions"][0] == "你们支持私有化部署吗？"
+    data = (await client.get("/api/widget/config?assistant=quick-q-bot")).json()
+    assert data["suggested_questions"] == [
+        "你们支持私有化部署吗？", "如何接入我的网站？", "有哪些模型可选？",
+        "价格怎么算？", "支持离线运行吗？", "有没有 API 文档？",
+    ]
+    # 默认助手未配置 → 空数组（挂件不渲染快捷问题）
+    default_data = (await client.get("/api/widget/config")).json()
+    assert default_data["suggested_questions"] == []
+
+
+async def test_suggested_questions_empty_removed_from_ui_config(db):
+    """空列表不落库，保持继承链干净（ui_config 为空时整列置空）"""
+    from app.services.assistant_store import create_assistant, update_assistant, get_ui_config
+
+    row = await create_assistant(db, {
+        "id": "blank-q", "name": "空问题", "ui_config": {"suggested_questions": ["  "]},
+    })
+    assert row.ui_config is None
+    assert get_ui_config(row) == {}
+
+    row = await update_assistant(db, "blank-q", {
+        "ui_config": {"theme": "#22A0FF", "suggested_questions": []},
+    })
+    assert get_ui_config(row) == {"theme": "#22A0FF"}
+
+
 async def test_general_template_is_pure_qa(client, admin_headers):
     resp = await client.get("/api/assistants/templates", headers=admin_headers)
     scenarios = {s["key"]: s for s in resp.json()["scenarios"]}

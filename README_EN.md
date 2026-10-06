@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.6.2-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.3-orange.svg" alt="Version"/>
 </p>
 
 **Embed an AI assistant into any web system with one line of code — conversational AI that connects users with your business.**
@@ -59,10 +59,12 @@ Wiring AI into an existing web system usually means building a chat UI, conversa
 
 ### Widget
 
-- **One-line embed** — a single vanilla JavaScript file (~45KB) with no runtime dependencies; built-in safe Markdown renderer
+- **One-line embed** — a single vanilla JavaScript file (~50KB) with no runtime dependencies; built-in safe Markdown renderer
 - **Embed API** — programmatic setup via `LeadChat.init({ assistant, context, theme, mode, ... })` with a pre-load queue; legacy `data-*` attributes remain supported
 - **Windowed / fullscreen modes** — one-click fullscreen from the chat header, `data-mode` and API support; the visitor's choice is remembered locally
 - **Draggable** — the floating button and panel header can both be dragged (mouse/touch) with viewport clamping and remembered position
+- **Suggested questions** — configure common questions per assistant; visitors ask one with a single click. They only appear in a fresh conversation and collapse once the first message is sent
+- **Mobile-ready** — on phones the panel automatically goes full-viewport (portrait and short landscape windows), with inner sizes scaling in vw/vh units; notch safe-area insets, iOS input-zoom prevention and dynamic viewport height (dvh) for the soft keyboard are handled. Tablets keep the floating-panel layout
 - **Configurable appearance** — theme color, button icon (5 presets plus custom upload), position, title, welcome message; assistants can override the look independently
 - **Automatic hover color** — derived from the theme color via an HSL algorithm (darken light colors, lighten dark ones)
 - **Shadow DOM isolation** — no style leakage between the widget and the host page
@@ -194,10 +196,10 @@ After startup, open the admin panel, pick a public or private model service unde
 
 ```html
 <!-- Default assistant: no assistant attribute -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3"></script>
 
 <!-- Specific assistant: add data-assistant. The admin "Assistants" list gives you a copyable embed code per assistant -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2" data-assistant="support"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3" data-assistant="support"></script>
 ```
 
 Each assistant has its own prompt, welcome message, auto-popup, appearance and collection rules (unset items inherit global settings). So **one LeadChat instance can serve many websites/systems at once**: different sites can embed different assistants, or share the same one. An unknown or disabled id silently falls back to the default assistant.
@@ -217,7 +219,7 @@ Each assistant has its own prompt, welcome message, auto-popup, appearance and c
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.3"></script>
 <script>
   // Context can be updated at runtime (e.g. after SPA route changes)
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -239,12 +241,16 @@ Mount different assistants on different pages: `support` on after-sales pages, `
 | `LeadChat.setMode(mode)` | Set window mode: `"window"` or `"fullscreen"` |
 | `LeadChat.toggleFullscreen()` | Toggle between windowed and fullscreen |
 
-`init` options: `assistant` (ID string or `{ id }`), `context`, `api`, `theme`, `position`, `title`, `welcome`, `icon`, `mode` (`"window"` / `"fullscreen"`; `fullscreen: true` also accepted).
+`init` options: `assistant` (ID string or `{ id }`), `context`, `api`, `theme`, `position`, `title`, `welcome`, `icon`, `questions` (array of suggested-question strings, overriding the admin settings), `mode` (`"window"` / `"fullscreen"`; `fullscreen: true` also accepted).
 
 **Window modes and dragging (v0.6.2)**
 
 - **Windowed / fullscreen**: a fullscreen button in the chat header expands the panel to fill the browser; the visitor's choice is remembered locally. Hosts can set the initial mode via `data-mode="fullscreen"` or `init({ mode: "fullscreen" })`. On screens ≤480px the windowed panel is already fullscreen. Press `Esc` to close.
 - **Draggable**: both the floating button and the panel header can be dragged (mouse and touch); the panel and bubble follow and are clamped to the viewport. The position is remembered locally; fullscreen mode is not draggable.
+
+**Suggested questions (v0.6.3)**
+
+Configure them under Assistants → edit an assistant → Reception settings, one per line, up to 6 (60 characters each; blanks and duplicates are dropped). Leave it empty to hide them. When a visitor opens the window they appear as pill buttons above the input, and clicking one sends it as the question. They show up only in a **fresh conversation** — never during history replay — and collapse after the first message. Hosts can override them per page with `init({ questions: [...] })` (page-side wins over admin settings).
 
 **Legacy data-* attributes (still supported)**
 
@@ -407,11 +413,12 @@ LeadChat focuses on the Web AI Interaction Layer. It is not meant to become an A
 - [x] v0.6.0 Multi-model switching, provider-based model management, built-in local embeddings
 - [x] v0.6.1 Improving LeadChat usability: zero-config startup, public/private provider grouping with real brand icons, simpler admin configuration
 - [x] v0.6.2 Widget interaction: windowed/fullscreen modes, draggable button and panel header (remembered position, viewport clamping), Esc to close, Embed API mode control
+- [x] v0.6.3 Suggested questions: per-assistant common questions, one click to ask
 
 ### v0.6 — Interaction Experience
 
 - [x] In-dashboard multi-model switching
-- [ ] Suggested Questions
+- [x] Suggested Questions (v0.6.3)
 - [ ] Webhook / Event Webhook
 - [ ] Per-assistant model and knowledge-base configuration
 - [ ] Embed API enhancements

@@ -79,7 +79,7 @@
     context: { page: location.pathname, order_id: "O-009" }
   }]);
 </script>
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.3"></script>
 ```
 
 运行期可随时调用 `LeadChat.setContext({...})` 更新（如 SPA 路由切换），详见 README「嵌入任意 Web 系统」。
@@ -90,11 +90,23 @@
 - **可拖拽**：浮动按钮和小窗标题栏都可拖动（鼠标 / 触摸，Pointer Events），窗口与气泡跟随、自动限制在视口内；位置保存在 `localStorage`，下次打开保持。全屏下不拖拽；清除站点数据即复位。
 - 按 `Esc` 收起聊天窗。
 
+快捷问题（v0.6.3）：
+
+- 按助手配置（「多助手 → 编辑助手 → 接待设置」），一行一个、最多 6 条、每条 60 字内，自动去空去重；留空则不显示；
+- 访客打开窗口时，问题以胶囊按钮显示在输入框上方，点击即作为该问题发送；只在全新对话中出现（不打扰历史回放），发出第一条消息后自动收起；
+- 页面端可用 `init({ questions: ["怎么收费？", "支持私有化部署吗？"] })` 覆盖后台配置（页面端优先），数组同样按 6 条 / 60 字裁剪。
+
+移动端适配（v0.6.3）：
+
+- 手机竖屏（视口宽 ≤480px）聊天窗自动铺满全屏，内部字号 / 间距 / 触摸目标全部按 `vw/vh` 随视口缩放；触屏设备横屏矮窗（视口高 ≤480px）同样铺满；Pad 及更宽视口沿用桌面浮窗；
+- 适配刘海屏 / Home 指示条安全区（`env(safe-area-inset-*)`，宿主页面需带 `viewport-fit=cover` 才在全屏 WebView 中生效）；
+- 输入框字号在窄屏下不低于 16px 等效，避免 iOS Safari 聚焦自动放大；窗口高度使用 `100dvh`，软键盘弹起时跟随可视高度；
+- 窄屏下隐藏全屏切换按钮（窗口本就铺满）、开窗时隐藏浮动按钮；触屏端打开窗口不自动聚焦输入框（不强制弹键盘）；消息区滚动不带动宿主页面。
+
 挂件其他行为：
 
 - 对话记录保存在浏览器 `localStorage`，刷新页面不丢失
 - 欢迎气泡每会话弹一次，关闭后本会话不再出现
-- 移动端（≤480px）小窗自动以全屏尺寸展示
 
 ## 四、后台配置项（系统设置页）
 
@@ -187,6 +199,7 @@
 | 接待设置 | 欢迎语（访客打开窗口的首条消息） | 使用内置默认欢迎语 |
 | 接待设置 | 自动弹出延迟（秒） | **不自动弹出**；填大于 0 的秒数才弹 |
 | 接待设置 | 弹出气泡文案 | 与欢迎语一致 |
+| 接待设置 | 快捷问题（一行一个，最多 6 条） | **不显示** |
 | 采集 | 引导话术（collect 模式追问语气） | 使用内置默认引导话术 |
 | 挂件外观 | 窗口标题 | 公司名称 |
 | 挂件外观 | 主题色 / 按钮图标（预设或上传）/ 右下角·左下角 | 继承「系统设置」默认皮肤 |
@@ -200,10 +213,10 @@
 
 ```html
 <!-- 默认助手（不带标识） -->
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.3"></script>
 
 <!-- 售后助手（带 data-assistant 标识，任意网站嵌入都使用该助手及其专属外观/接待） -->
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2" data-assistant="support"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.3" data-assistant="support"></script>
 ```
 
 因此：不同网站可以嵌不同助手（官网用销售助手、售后系统用客服助手、内网用内部 Copilot），也可以多个网站共用同一个助手；标识无效或助手已停用时自动回退默认助手。

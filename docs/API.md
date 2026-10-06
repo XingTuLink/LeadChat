@@ -381,11 +381,14 @@ data: {"conversation_id":"a1b2c3…","assistant_id":"default","reply":"您好，
   "widget_position": "right",
   "widget_icon": "chat",
   "auto_popup_delay": 0,
+  "suggested_questions": ["我的订单到哪了？", "怎么申请退换货？"],
   "business_fields": [{ "key": "order_id", "label": "订单号", "type": "string", "required": true }]
 }
 ```
 
-说明：默认助手的外观来自系统全局配置；其他助手若在 `ui_config` 中配置了 title/theme/position/icon/welcome/popup，则逐项覆盖全局值，未配置的项继续继承。默认助手的 `business_fields` 为空数组（纯问答），`collect_mode` 为 `ask`。
+说明：默认助手的外观来自系统全局配置；其他助手若在 `ui_config` 中配置了 title/theme/position/icon/welcome/popup/suggested_questions，则逐项覆盖全局值，未配置的项继续继承。默认助手的 `business_fields` 为空数组（纯问答），`collect_mode` 为 `ask`。
+
+`suggested_questions` 来自助手的 `ui_config.suggested_questions`（最多 6 条、每条 60 字，写入时自动去空去重），未配置时为空数组，挂件不渲染快捷问题。
 
 ---
 
@@ -394,7 +397,7 @@ data: {"conversation_id":"a1b2c3…","assistant_id":"default","reply":"您好，
 ### GET /health
 
 ```json
-{ "status": "ok", "version": "0.6.2" }
+{ "status": "ok", "version": "0.6.3" }
 ```
 
 ### 静态资源

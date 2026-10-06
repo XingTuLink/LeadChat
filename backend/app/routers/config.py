@@ -66,6 +66,11 @@ async def get_widget_config(
         if ui_key in ui_cfg and ui_cfg[ui_key] not in (None, ""):
             payload[cfg_key] = ui_cfg[ui_key]
 
+    # 快捷问题：列表型配置，单独规范化（兼容历史字符串写法），未配置则返回空数组
+    payload["suggested_questions"] = assistant_store.normalize_suggested_questions(
+        ui_cfg.get(assistant_store.SUGGESTED_QUESTIONS_KEY)
+    )
+
     resp = WidgetConfigResponse(**payload)
     resp.footer_enabled = settings.branding_footer_enabled
     resp.assistant_id = assistant_row.id

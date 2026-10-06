@@ -352,7 +352,7 @@ html, body { margin: 0; padding: 0; }
       <header class="main-header">
         <span class="crumb">{{ pageTitle }}</span>
         <div class="header-right">
-          <span class="ver-tag">v0.6.2</span>
+          <span class="ver-tag">v0.6.3</span>
           <a-button type="link" size="small" @click="logout">退出登录</a-button>
         </div>
       </header>
@@ -745,7 +745,7 @@ html, body { margin: 0; padding: 0; }
 
           <a-card class="setting-section" title="挂件外观（所有助手的默认皮肤）">
             <div class="muted" style="margin:-8px 0 14px">
-              这里是所有助手未自定义时继承的默认皮肤；欢迎语与自动弹出等接待设置已移至「多助手 → 编辑助手 → 接待设置」，默认不自动弹出。
+              这里是所有助手未自定义时继承的默认皮肤；欢迎语、快捷问题与自动弹出等接待设置已移至「多助手 → 编辑助手 → 接待设置」，默认不自动弹出。
             </div>
             <a-form :label-col="{ style: { width: '110px' } }">
               <a-form-item label="主题色">
@@ -880,6 +880,14 @@ html, body { margin: 0; padding: 0; }
         <div style="width:100%;display:flex;flex-direction:column;gap:10px">
           <a-input v-model:value="assistantForm.ui.welcome_message" style="max-width:520px"
                    placeholder="欢迎语：访客打开聊天窗口看到的第一条消息（留空使用默认欢迎语）"></a-input>
+          <div style="width:100%">
+            <a-textarea v-model:value="assistantForm.ui.suggested_questions_text" :rows="3"
+                        style="max-width:520px"
+                        placeholder="快捷问题，一行一个（最多 6 条，留空则不显示）&#10;例：你们支持私有化部署吗？&#10;接入我的网站需要改代码吗？"></a-textarea>
+            <div class="muted" style="margin-top:4px">
+              访客打开窗口时可一键提问，点击即作为该问题发送；只在全新对话里出现，发出第一条消息后自动收起
+            </div>
+          </div>
           <div class="color-row">
             <a-input-number v-model:value="assistantForm.ui.auto_popup_delay" :min="0" :max="600"
                             :step="1" style="width:120px" addon-after="秒"></a-input-number>
@@ -1210,7 +1218,7 @@ const app = Vue.createApp({
         id: "", name: "", description: "", scenario: "general",
         system_prompt: "", collect_mode: "ask", collect_data_type: "custom",
         fields: [], contextKeys: "",
-        ui: { title: "", welcome_message: "", theme: "", position: "", icon: "" }
+        ui: { title: "", welcome_message: "", suggested_questions_text: "", theme: "", position: "", icon: "" }
       },
       fieldTypeOptions: [
         { label: "单行文本", value: "string" },
@@ -1365,7 +1373,7 @@ const app = Vue.createApp({
       if (!this.embedRecord) return "";
       const base = location.origin + LC_BASE;
       const da = this.embedRecord.id === "default" ? "" : ' data-assistant="' + this.embedRecord.id + '"';
-      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.2"' + da + '><\/script>';
+      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.3"' + da + '><\/script>';
     },
     initEmbed() {
       if (!this.embedRecord) return "";
@@ -1379,7 +1387,7 @@ const app = Vue.createApp({
       lines.push("    context: { page: location.pathname, record_id: \"123\" } // 宿主业务上下文，可省略");
       lines.push("  }]);");
       lines.push("<\/script>");
-      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.2"><\/script>');
+      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.3"><\/script>');
       return lines.join("\n");
     },
     statCards() {
@@ -1405,7 +1413,7 @@ const app = Vue.createApp({
       return !!v && this.iconPresets.every(p => p.key !== v);
     },
     embedCode() {
-      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.2"><\/script>';
+      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.3"><\/script>';
     }
   },
   mounted() {
@@ -1699,7 +1707,8 @@ const app = Vue.createApp({
         collect_guide: "",
         fields: [], contextKeys: "",
         ui: {
-          title: "", welcome_message: "", popup_message: "", auto_popup_delay: null,
+          title: "", welcome_message: "", suggested_questions_text: "",
+          popup_message: "", auto_popup_delay: null,
           theme: "", position: "", icon: ""
         }
       };
@@ -1768,6 +1777,7 @@ const app = Vue.createApp({
           ui: {
             title: u.title || "",
             welcome_message: u.welcome_message || "",
+            suggested_questions_text: (u.suggested_questions || []).join("\n"),
             popup_message: u.popup_message || "",
             auto_popup_delay: (u.auto_popup_delay === undefined || u.auto_popup_delay === null || u.auto_popup_delay === "")
                                ? null : Number(u.auto_popup_delay),
@@ -1811,6 +1821,13 @@ const app = Vue.createApp({
       // 自动弹出：填大于 0 的秒数才写入；留空或 0＝不弹出（同时保持继承链干净）
       const delay = Number(f.ui.auto_popup_delay);
       if (delay > 0) ui.auto_popup_delay = delay;
+      // 快捷问题：一行一条；去空、去重、最多 6 条，空则不写入（挂件不显示）
+      const questions = [];
+      String(f.ui.suggested_questions_text || "").split(/\r?\n/).forEach(line => {
+        const q = line.trim();
+        if (q && questions.indexOf(q) === -1 && questions.length < 6) questions.push(q);
+      });
+      if (questions.length) ui.suggested_questions = questions;
       const collectConfig = { mode: f.collect_mode, data_type: f.collect_data_type };
       const guide = (f.collect_guide || "").trim();
       if (guide) collectConfig.guide_message = guide;

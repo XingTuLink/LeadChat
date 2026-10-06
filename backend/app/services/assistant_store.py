@@ -28,6 +28,11 @@ MODE_COLLECT = "collect"
 DEFAULT_CONTEXT_CONFIG = {"allowed_fields": [], "max_keys": 20}
 DEFAULT_COLLECT_CONFIG = {"mode": MODE_ASK, "data_type": "custom", "intent_hint": ""}
 
+# 快捷问题（Suggested Questions）：访客打开窗口时可一键提问，按助手配置
+SUGGESTED_QUESTIONS_KEY = "suggested_questions"
+SUGGESTED_QUESTIONS_MAX = 6
+SUGGESTED_QUESTION_MAX_LEN = 60
+
 
 # ---------------------------------------------------------------- 场景模板
 # 顺序即后台展示顺序：通用 → 客服 → 内部 → 需求 → 销售线索（Lead Generation 置末）
@@ -165,6 +170,39 @@ def _loads(value: str | None, default: Any) -> Any:
         return data if data is not None else json.loads(json.dumps(default))
     except (json.JSONDecodeError, TypeError):
         return json.loads(json.dumps(default))
+
+
+def normalize_suggested_questions(value: Any) -> list[str]:
+    """规范快捷问题：接受字符串（按行）或列表，去空、去重、截断（6 条 × 60 字）"""
+    if isinstance(value, str):
+        # 只按换行切分：问题里常含逗号（如「你好，请问…」），按逗号切会把句子切碎
+        items: list[Any] = re.split(r"[\r\n]+", value)
+    elif isinstance(value, (list, tuple)):
+        items = list(value)
+    else:
+        return []
+
+    result: list[str] = []
+    for raw in items:
+        text = str(raw or "").strip()[:SUGGESTED_QUESTION_MAX_LEN]
+        if not text or text in result:
+            continue
+        result.append(text)
+        if len(result) >= SUGGESTED_QUESTIONS_MAX:
+            break
+    return result
+
+
+def sanitize_ui_config(config: dict | None) -> dict:
+    """清洗助手 ui_config：快捷问题规范化为字符串数组，空则移除该键（保持继承链干净）"""
+    data = dict(config) if isinstance(config, dict) else {}
+    if SUGGESTED_QUESTIONS_KEY in data:
+        questions = normalize_suggested_questions(data.get(SUGGESTED_QUESTIONS_KEY))
+        if questions:
+            data[SUGGESTED_QUESTIONS_KEY] = questions
+        else:
+            data.pop(SUGGESTED_QUESTIONS_KEY, None)
+    return data
 
 
 def template_meta() -> list[dict]:
@@ -385,7 +423,7 @@ async def create_assistant(session: AsyncSession, data: dict) -> Assistant:
         system_prompt = template["system_prompt"]
     collect = data.get("collect_config") or template["collect"]
     context_cfg = data.get("context_config") or template["context"]
-    ui_cfg = data.get("ui_config") or template.get("ui") or {}
+    ui_cfg = sanitize_ui_config(data.get("ui_config") or template.get("ui"))
     fields = data.get("business_fields")
     if fields is None:
         fields = template["fields"]
@@ -431,7 +469,8 @@ async def update_assistant(session: AsyncSession, assistant_id: str, data: dict)
     if "collect_config" in data:
         assistant.collect_config = _dumps(data["collect_config"] or DEFAULT_COLLECT_CONFIG)
     if "ui_config" in data:
-        assistant.ui_config = _dumps(data["ui_config"]) if data["ui_config"] else None
+        ui_cfg = sanitize_ui_config(data["ui_config"])
+        assistant.ui_config = _dumps(ui_cfg) if ui_cfg else None
     if "status" in data and data["status"] in ("active", "disabled"):
         assistant.status = data["status"]
     if "business_fields" in data:

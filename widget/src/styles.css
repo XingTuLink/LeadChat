@@ -12,7 +12,9 @@
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   font-size: 14px;
   color: var(--lc-text);
+  -webkit-tap-highlight-color: transparent;
 }
+.lc-root button { -webkit-tap-highlight-color: transparent; }
 
 /* ---------- 浮动按钮 ---------- */
 .lc-fab {
@@ -83,6 +85,7 @@
   width: 360px;
   height: 520px;
   max-height: calc(100vh - 120px);
+  max-height: calc(100dvh - 120px);  /* 软键盘弹起时 dvh 随可视高度收缩（支持的浏览器优先） */
   background: var(--lc-bg);
   border: 1px solid var(--lc-border);
   border-radius: var(--lc-radius);
@@ -167,6 +170,8 @@
 .lc-messages {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;  /* 消息滚到头不带动宿主页面橡皮筋 */
+  -webkit-overflow-scrolling: touch;
   padding: 14px;
   background: #f9fafb;
   scrollbar-width: thin;
@@ -268,6 +273,33 @@
 .lc-typing span:nth-child(2) { animation-delay: 0.2s; }
 .lc-typing span:nth-child(3) { animation-delay: 0.4s; }
 
+/* ---------- 快捷问题（Suggested Questions） ---------- */
+.lc-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px 0;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+.lc-suggest-title { font-size: 11px; color: var(--lc-text-light); }
+.lc-suggest-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.lc-suggest-item {
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--lc-border);
+  border-radius: 14px;
+  background: var(--lc-bg);
+  color: var(--lc-text);
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.lc-suggest-item:hover { border-color: var(--lc-primary); color: var(--lc-primary); }
+
 /* ---------- 输入区 ---------- */
 .lc-footer {
   display: flex;
@@ -331,17 +363,90 @@
   40% { opacity: 1; }
 }
 
-/* ---------- 移动端适配 ---------- */
-@media (max-width: 480px) {
+/* ---------- 移动端适配 ----------
+   断点用 em（随根字号缩放，1em=16px 时 30em=480px）。
+   1) 铺满块：竖屏窄窗（手机）或触屏横屏矮窗——聊天窗占满视口，
+      隐藏 FAB（开窗时）与全屏切换按钮（窄屏下小窗本就铺满，切换无意义）。
+      !important 用于压制拖拽逻辑写入的内联定位（top/bottom/left/maxHeight）。 */
+@media (max-width: 30em), (pointer: coarse) and (max-height: 30em) {
   .lc-window {
+    top: 0 !important;
     right: 0 !important;
-    left: 0 !important;
     bottom: 0 !important;
-    width: 100%;
-    height: 100%;
-    max-height: 100%;
+    left: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;  /* iOS 软键盘弹起时随可视高度收缩 */
+    max-height: none !important;
     border-radius: 0;
     border: none;
   }
+  .lc-root--open .lc-fab { display: none; }
+  .lc-header-full { display: none; }
   .lc-bubble { max-width: 70vw; }
+}
+
+/* 2) 竖屏手机（≤480px）：内部尺寸/字号全部按视口宽度比例（vw），
+   基准 375px；并消化刘海屏安全区（env safe-area，回退值 0 无单位语义）。 */
+@media (max-width: 30em) {
+  /* 顶部栏：顶部留出刘海/挖孔安全区，关闭按钮加大到约 40px 触摸区 */
+  .lc-header {
+    padding: 3.2vw 4.27vw;
+    padding-top: calc(3.2vw + env(safe-area-inset-top, 0px));
+  }
+  .lc-header-title { font-size: 4.27vw; }
+  .lc-header-status { font-size: 3.2vw; gap: 1.33vw; margin-top: 0.53vw; }
+  .lc-header-status .lc-dot { width: 1.87vw; height: 1.87vw; }
+  .lc-header-close { width: 10.67vw; height: 10.67vw; padding: 0; font-size: 5.33vw; }
+
+  /* 消息区 */
+  .lc-messages { padding: 3.73vw; }
+  .lc-msg { margin-bottom: 3.2vw; }
+  .lc-msg-inner { max-width: 86%; padding: 2.4vw 3.2vw; font-size: 3.73vw; }
+  .lc-msg-sources { font-size: 2.93vw; margin-top: 1.07vw; }
+  .lc-msg-inner.lc-md { font-size: 3.6vw; }
+  .lc-md h3 { font-size: 4vw; }
+  .lc-md h4 { font-size: 3.87vw; }
+  .lc-md h5, .lc-md h6 { font-size: 3.73vw; }
+  .lc-md-code, .lc-md-pre code, .lc-md table { font-size: 3.33vw; }
+  .lc-md-pre { padding: 2.67vw 3.2vw; border-radius: 2.13vw; }
+  .lc-md th, .lc-md td { padding: 1.07vw 2.13vw; }
+  .lc-typing { gap: 1.07vw; padding: 1.07vw 0.53vw; }
+  .lc-typing span { width: 1.6vw; height: 1.6vw; }
+
+  /* 快捷问题 */
+  .lc-suggest { gap: 1.6vw; padding: 2.67vw 3.73vw 0; }
+  .lc-suggest-title { font-size: 2.93vw; }
+  .lc-suggest-list { gap: 1.6vw; }
+  .lc-suggest-item {
+    padding: 1.6vw 2.93vw;
+    font-size: 3.47vw;
+    border-radius: 3.73vw;
+  }
+
+  /* 输入区：底部留出 Home 指示条安全区；
+     输入框 5vw（320px 屏=16px）规避 iOS Safari 对 <16px 输入框的聚焦自动缩放 */
+  .lc-footer {
+    gap: 2.13vw;
+    padding: 3.2vw 3.73vw;
+    padding-bottom: calc(3.2vw + env(safe-area-inset-bottom, 0px));
+  }
+  .lc-input { padding: 2.4vw 3.2vw; font-size: 5vw; border-radius: 2.13vw; }
+  .lc-send { width: 10.67vw; height: 10.67vw; border-radius: 2.13vw; }
+  .lc-send svg { width: 4.8vw; height: 4.8vw; }
+
+  /* 品牌页脚：同样避开底部安全区 */
+  .lc-brand {
+    font-size: 2.67vw;
+    padding-top: 1.33vw;
+    padding-bottom: calc(1.87vw + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* 3) 触屏横屏矮窗：安全区在左右两侧（刘海在一边），按短边 vh 比例留边 */
+@media (pointer: coarse) and (max-height: 30em) and (orientation: landscape) {
+  .lc-header {
+    padding-left: calc(4.27vh + env(safe-area-inset-left, 0px));
+    padding-right: calc(4.27vh + env(safe-area-inset-right, 0px));
+  }
 }

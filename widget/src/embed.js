@@ -14,6 +14,7 @@
  *      context: { page: "detail", order_id: "O-123" }, // 宿主业务上下文（扁平键值）
  *      theme: "dark", position: "right", title: "售后助手",
  *      welcome: "你好", icon: "https://.../icon.png",
+ *      questions: ["怎么收费？", "支持私有化部署吗？"],   // 快捷问题，覆盖后台按助手配置（最多 6 条）
  *      mode: "fullscreen"                 // 窗口模式："window" 小窗（默认）/ "fullscreen" 全屏
  *    });
  *    // 运行时：LeadChat.setContext({...})、LeadChat.open()、LeadChat.close()
@@ -61,6 +62,7 @@
     welcome: dataAttr("data-welcome"),
     title: dataAttr("data-title"),
     icon: dataAttr("data-icon"),
+    questions: null,
     mode: dataAttr("data-mode") === "fullscreen" ? "fullscreen"
         : dataAttr("data-mode") === "window" ? "window" : "",
     context: null
@@ -93,6 +95,8 @@
     var aid = pickAssistant(o.assistant || o.assistantId);
     if (aid) opts.assistant = aid;
     if (o.context && typeof o.context === "object") opts.context = o.context;
+    // 快捷问题：页面端传入即覆盖后台配置（仅数组，长度与条数由挂件侧裁剪）
+    if (Object.prototype.toString.call(o.questions) === "[object Array]") opts.questions = o.questions;
     if (o.mode === "fullscreen" || o.mode === "window") opts.mode = o.mode;
     else if (o.fullscreen === true) opts.mode = "fullscreen";
     else if (o.fullscreen === false) opts.mode = "window";
@@ -115,7 +119,7 @@
   // ---- 对外 Embed API ----
   window.LeadChat = {
     __lcReady: true,
-    version: "0.6.2",
+    version: "0.6.3",
     init: function (o) { applyInit(o, true); },
     setContext: function (ctx) {
       opts.context = ctx && typeof ctx === "object" ? ctx : null;

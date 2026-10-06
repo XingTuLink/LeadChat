@@ -22,8 +22,16 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 async def test_providers_listed(client, admin_headers):
     resp = await client.get("/api/models/providers", headers=admin_headers)
     assert resp.status_code == 200
-    keys = [p["key"] for p in resp.json()["providers"]]
-    assert keys == ["openai", "deepseek", "qwen", "glm", "ollama", "custom"]
+    providers = resp.json()["providers"]
+    keys = [p["key"] for p in providers]
+    # 顺序：公有模型在前、私有模型在后，DeepSeek 为默认推荐项
+    assert keys == ["deepseek", "openai", "qwen", "glm", "ollama", "custom"]
+    groups = {p["key"]: p["group"] for p in providers}
+    assert groups == {
+        "deepseek": "public", "openai": "public",
+        "qwen": "public", "glm": "public",
+        "ollama": "private", "custom": "private",
+    }
 
 
 async def test_list_masks_api_key(client, admin_headers):

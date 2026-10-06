@@ -17,13 +17,11 @@ class Settings(BaseSettings):
     # ---- 对话模型 ----
     # 对话模型全部在后台「模型管理」中配置，支持多模型在线切换，不再读取环境变量
 
-    # ---- Embedding（可选）----
-    embedding_model: str = ""           # 留空则用 ChromaDB 内置本地 embedding（零配置）
-    embedding_api_key: str = ""         # 远程 embedding 密钥（本地模型留空）
-    embedding_api_base: str = ""        # 远程 embedding 端点；留空用默认
+    # ---- Embedding ----
+    # 使用内置本地 ONNX 模型（all-MiniLM-L6-v2，镜像内置、离线可用），无需任何配置
 
     # ---- 管理后台 ----
-    admin_password: str = "change_this_before_running"
+    admin_password: str = "admin123"   # 零配置默认密码，正式部署建议通过 ADMIN_PASSWORD 覆盖
 
     # ---- 数据库 ----
     database_url: str = (

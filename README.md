@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.6.0-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.1-orange.svg" alt="Version"/>
 </p>
 
 **一行代码嵌入任何 Web 系统，用对话连接用户与业务。**
@@ -55,7 +55,7 @@ LeadChat 是一个开源的 Web AI 助手（Web AI Interaction Layer）：官网
 - **流式对话（SSE）** — 回复逐 token 呈现；代理不支持时自动降级普通请求，非流式接口保留
 - **Markdown 渲染** — AI 回复中的标题、加粗、列表、引用、表格、行内/代码块在挂件与后台对话记录中直接排版（先转义后格式化，防注入）
 - **RAG 知识库** — 支持 PDF / DOCX / TXT / MD，自动解析、切片、向量化（ChromaDB），回答附带引用来源；内置本地 Embedding 模型，零配置、零额外 API 成本
-- **主动触达** — 欢迎语加定时自动弹出的引导气泡，文案与延迟均可配置
+- **主动触达** — 每个助手可独立配置欢迎语与定时自动弹出的引导气泡（文案与延迟均可配，默认不自动弹出）
 
 ### 挂件
 
@@ -171,25 +171,31 @@ sequenceDiagram
 ```bash
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
-cp .env.example .env
-# 编辑 .env：至少修改 ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-启动后打开管理后台，在「模型管理」中添加对话模型并激活（可先点「测试」验证），挂件才能正常对话。
+零配置即可启动（SQLite + 内置本地 Embedding + 默认后台密码 `admin123`）；需要改密码等默认值时再 `cp .env.example .env` 按需调整。
+
+启动后打开管理后台，在「模型管理」中选择公有或私有模型服务、填写凭证并激活（可先点「测试」验证），挂件才能正常对话。
 
 | 入口 | 地址 |
 |---|---|
-| 管理后台 | `http://your-server:11999/admin/`（密码为 .env 中设置的 ADMIN_PASSWORD） |
+| 管理后台 | `http://your-server:11999/admin/`（默认密码 `admin123`，可用 `ADMIN_PASSWORD` 覆盖） |
 | 挂件演示页 | `http://your-server:11999/widget/demo.html` |
 
 ### 嵌入任何 Web 系统
 
-**方式一：一行 script（最简，默认助手）**
+**方式一：一行 script（最简）**
 
 ```html
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
+<!-- 默认助手：不带助手标识 -->
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
+
+<!-- 指定助手：加 data-assistant 标识即可；后台「多助手」列表每个助手都有可复制的嵌入代码 -->
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1" data-assistant="support"></script>
 ```
+
+每个助手拥有独立的话术、欢迎语、自动弹出、外观与采集规则（未自定义项继承系统设置）。因此**一个 LeadChat 实例可同时服务多个网站/系统**：不同站点嵌不同助手，或多个站点共用同一助手；标识无效或助手停用时自动回退默认助手。
 
 **方式二：Embed API（指定助手 + 宿主业务上下文，适合 SPA / 业务系统）**
 
@@ -206,7 +212,7 @@ docker compose up -d --build
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
 <script>
   // 运行时也可更新上下文（如 SPA 路由切换后）
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -214,7 +220,7 @@ docker compose up -d --build
 </script>
 ```
 
-不同页面挂不同助手：售后页用 `assistant: "support"`，内部系统用 `"internal"`，营销页也可以挂销售线索助手，一个后端同时服务多个场景；不指定时默认助手始终是纯问答。
+不同页面挂不同助手：售后页用 `assistant: "support"`，内部系统用 `"internal"`，营销页也可以挂销售线索助手，一个后端同时服务多个场景；不指定时使用默认助手（可在「多助手」中配置其采集与接待）。
 
 **LeadChat API**
 
@@ -250,37 +256,36 @@ python -m venv .venv
 .venv\Scripts\activate            # Windows
 source .venv/bin/activate         # macOS / Linux
 pip install -r backend/requirements.txt
-cp .env.example .env              # 填好配置
 cd backend
 uvicorn app.main:app --reload --port 11999
 ```
 
-启动时自动建表、初始化默认配置；知识库首次上传时自动下载本地 Embedding 模型（约 80MB，也可提前放到 `~/.cache/chroma/onnx_models/`）。
+无需 `.env` 即可启动（默认密码 `admin123`）；本地非 Docker 运行时，知识库首次上传会自动下载内置 Embedding 模型（约 80MB，也可提前放到 `~/.cache/chroma/onnx_models/`），Docker 镜像则已内置。
 
 ## 支持的大模型
 
-在后台「模型管理」中添加，支持多个模型在线切换：
+在后台「模型管理」中按「公有模型 / 私有模型」两组选择，支持多个模型在线切换：
 
-| 厂商 | 模型示例 | 说明 |
-|--------|---------|------|
-| DeepSeek | `deepseek-chat` | 性价比高 |
-| OpenAI | `gpt-4o-mini` | |
-| 通义千问 | `qwen-plus` / `qwen-turbo` | 阿里云 DashScope |
-| 智谱 | `glm-4-flash` / `glm-4-air` | 有免费模型 |
-| Ollama | `llama3.1` / `qwen2.5` | 完全本地；容器内端点填 `http://host.docker.internal:11434` |
-| 自定义 | 任意 OpenAI 兼容模型 | 需自行填写 API 端点 |
+| 分组 | 服务 | 模型示例 | 说明 |
+|------|------|---------|------|
+| 公有模型 | DeepSeek | `deepseek-chat` / `deepseek-v4-pro` | 性价比高 |
+| 公有模型 | OpenAI | `gpt-5.4-mini` / `gpt-5.4-nano` | |
+| 公有模型 | 通义千问 | `qwen-plus` / `qwen3.8-max` | 阿里云百炼，`qwen-plus` 自动指向最新版 |
+| 公有模型 | 智谱 | `glm-4.7-flash` / `glm-5.3` | `glm-4.7-flash` 免费 |
+| 私有模型 | Ollama | `qwen3.5` / `gpt-oss:20b` | 完全本地；容器内端点填 `http://host.docker.internal:11434` |
+| 私有模型 | OpenAI 兼容服务 | 任意兼容模型 | vLLM / 内网网关等，需填写接口端点 |
 
-Embedding 通过 `EMBEDDING_MODEL` 配置云端模型（建议带厂商前缀，如 `qwen/text-embedding-v3`）；留空则使用 ChromaDB 内置本地模型，零配置、零 API 成本、数据不出服务器。
+Embedding 使用内置本地模型（all-MiniLM-L6-v2），随镜像分发、离线可用、零 API 成本，数据不出服务器，无需任何配置。
 
 ## 管理后台
 
 - **仪表盘** — 今日/累计对话、采集数据、消息、文档统计
-- **模型管理** — 添加多个对话模型（厂商/模型标识/密钥/端点），连通性测试，在线切换立即生效
+- **模型管理** — 公有/私有模型服务分组选择，添加多个对话模型，连通性测试，在线切换立即生效
 - **助手管理** — 按场景模板新建助手、Instructions 编辑、采集模式（ask/collect）与数据类型、业务字段编排、上下文白名单、外观覆盖；一键生成两种嵌入代码
 - **对话记录** — 完整聊天过程、AI 引用的知识来源、对话详情抽屉；支持结束/删除
 - **知识库** — 拖拽上传（两阶段进度：传输百分比 → 解析向量化中），自动切片向量化
 - **采集数据** — 各助手采集的结构化数据（工单/需求/预约/自定义/线索），按类型与助手筛选、状态流转
-- **系统设置** — 默认助手的全局回退：公司信息、系统提示词、通用业务字段（默认为空）与采集引导、挂件主题色/图标/欢迎语/自动弹出、品牌页脚开关
+- **系统设置** — 全局默认：公司信息、系统提示词、挂件默认皮肤（主题色/图标/位置）；欢迎语、自动弹出（默认关闭）与信息采集均按助手在「多助手」中独立配置
 
 ## 核心配置
 
@@ -288,7 +293,7 @@ Embedding 通过 `EMBEDDING_MODEL` 配置云端模型（建议带厂商前缀，
 
 | 环境变量 | 默认 | 说明 |
 |---|---|---|
-| `ADMIN_PASSWORD` | `change_this_before_running` | 后台管理密码，首次启动前务必修改 |
+| `ADMIN_PASSWORD` | `admin123` | 后台管理密码，正式部署建议覆盖 |
 | `DATABASE_URL` | SQLite | 换 PostgreSQL：`postgresql+asyncpg://user:pass@host:5432/leadchat` |
 | `CORS_ORIGINS` | `*` | 允许跨域来源 |
 | `CONVERSATION_TIMEOUT_MINUTES` | `30` | 对话闲置自动结束阈值，`0` 关闭 |
@@ -385,6 +390,8 @@ LeadChat 专注于 Web AI Interaction Layer，目标不是做 AI 中台或 Agent
 - [x] v0.3 在我们自己的官网上线试用了一段时间，根据暴露的问题持续修改优化
 - [x] v0.4 可配置助手、业务字段、Collected Data、Web Context、Embed API
 - [x] v0.5.x Assistant-first 重构、SSE 流式对话、Markdown 排版等开源前打磨
+- [x] v0.6.0 多模型在线切换、厂商化模型管理、内置本地 Embedding
+- [x] v0.6.1 正在提高 LeadChat 的易用性：零配置开箱即用、模型服务按公有/私有分组并配真实品牌图标、后台配置傻瓜化
 
 ### v0.6 — Interaction Experience
 

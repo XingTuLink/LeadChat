@@ -13,7 +13,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.llm_model import LLMModel
 
 # 支持的厂商（顺序即后台展示顺序）
-PROVIDERS: tuple[str, ...] = ("openai", "deepseek", "qwen", "glm", "ollama", "custom")
+PROVIDERS: tuple[str, ...] = (
+    # 公有模型（云端 API Key）
+    "deepseek", "openai", "qwen", "glm",
+    # 私有模型（本地 / 自建 OpenAI 兼容服务）
+    "ollama", "custom",
+)
+
+# 厂商分组：public=公有云模型，private=私有部署模型
+PROVIDER_GROUPS: dict[str, str] = {
+    "deepseek": "public", "openai": "public", "qwen": "public", "glm": "public",
+    "ollama": "private", "custom": "private",
+}
 
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 
@@ -29,9 +40,13 @@ PROVIDER_DEFAULT_BASES = {
 
 
 def provider_meta() -> list[dict[str, Any]]:
-    """厂商列表（供后台表单渲染，单一数据源）"""
+    """厂商列表（供后台表单渲染，单一数据源：顺序、默认端点、公私分组）"""
     return [
-        {"key": k, "default_base": PROVIDER_DEFAULT_BASES.get(k, "")}
+        {
+            "key": k,
+            "default_base": PROVIDER_DEFAULT_BASES.get(k, ""),
+            "group": PROVIDER_GROUPS.get(k, "public"),
+        }
         for k in PROVIDERS
     ]
 

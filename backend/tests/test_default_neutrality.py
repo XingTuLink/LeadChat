@@ -46,6 +46,8 @@ async def test_widget_config_exposes_no_capture_fields(client):
     data = resp.json()
     assert data["assistant_id"] == "default"
     assert data["collect_mode"] == "ask"
+    # v0.6.1：默认不自动弹出问候气泡
+    assert data["auto_popup_delay"] == 0
     # 公开配置不得下发任何采集字段（姓名 / 电话 / 邮箱 / 需求…）
     assert data["business_fields"] == []
     for word in _SALES_WORDS:
@@ -80,3 +82,16 @@ async def test_lead_generation_capability_retained_but_opt_in(client, admin_head
     assert data["assistant_id"] == "lead-opt-in"
     assert data["collect_mode"] == "collect"
     assert "name" in [f["key"] for f in data["business_fields"]]
+
+
+async def test_legacy_popup_default_migrated_to_off(db):
+    """旧版界面强制写库的默认 3 秒弹出，升级后清除（=新默认不弹）；自定义值保留"""
+    from app.services.config_store import get_all_config, migrate_legacy_config, set_config
+
+    await set_config(db, "auto_popup_delay", 5)
+    await migrate_legacy_config(db)
+    assert (await get_all_config(db))["auto_popup_delay"] == 5  # 用户自定义值保留
+
+    await set_config(db, "auto_popup_delay", 3)
+    await migrate_legacy_config(db)
+    assert (await get_all_config(db))["auto_popup_delay"] == 0  # 旧默认值清除 → 新默认不弹

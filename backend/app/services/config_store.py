@@ -27,7 +27,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     ),
     "welcome_message": "你好，我是这个系统的 AI 助手，可以帮你查询信息、回答问题或协助完成相关操作。",
     "popup_message": "您好，请问有什么可以帮您吗？",
-    "auto_popup_delay": 3,
+    "auto_popup_delay": 0,
     # 采集引导话术：仅在助手切换到 COLLECT 模式时生效
     "collect_guide_message": "方便的话，请把关键信息告诉我，我会帮你记录并跟进处理。",
     # v0.5.1：全局业务字段默认空数组——默认助手开箱即纯问答，不预设任何采集字段；
@@ -74,3 +74,22 @@ async def set_config(session: AsyncSession, key: str, value: Any) -> None:
     else:
         session.add(SystemConfig(key=key, value=stored))
     await session.commit()
+
+
+async def migrate_legacy_config(session: AsyncSession) -> None:
+    """一次性历史配置迁移（幂等）。
+
+    v0.6.1 前「系统设置」保存时会把自动弹出延迟的界面默认值 3 秒强制写库，
+    它并不代表用户的显式选择。新语义为「不配置就不自动弹出」（默认 0），
+    故仅清除恰好等于旧默认值 3 的行；用户自定义的其他秒数（5、10…）原样保留。
+    """
+    row = await session.get(SystemConfig, "auto_popup_delay")
+    if row is None:
+        return
+    try:
+        value = json.loads(row.value)
+    except (json.JSONDecodeError, TypeError):
+        return
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and float(value) == 3.0:
+        await session.delete(row)
+        await session.commit()

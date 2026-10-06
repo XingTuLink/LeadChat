@@ -10,15 +10,16 @@
 ```bash
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
-cp .env.example .env
-vi .env        # 至少修改 ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
+零配置即可启动：默认使用 SQLite、内置本地 Embedding 模型、后台默认密码 `admin123`。
+如需修改密码等默认值，再复制 `cp .env.example .env` 并按需调整（文件内所有项均可选）。
+
 启动后：
 
-1. 打开 `http://your-server:11999/admin`，用 `ADMIN_PASSWORD` 登录；
-2. 在「模型管理」中添加对话模型（厂商、模型标识、API Key），点击「测试」验证后「激活」；
+1. 打开 `http://your-server:11999/admin`，用管理员密码登录（默认 `admin123`，建议正式部署时通过 `ADMIN_PASSWORD` 修改）；
+2. 在「模型管理」中选择公有或私有模型服务，填写凭证后保存并激活；
 3. 需要知识库时在「知识库」上传文档；
 4. 把挂件嵌入代码放到你的网站，开始使用。
 
@@ -133,12 +134,8 @@ Linux 宿主机需在 `docker-compose.yml` 中追加：
 
 ### 2. 首次上传文档报 embedding 下载失败
 
-未配置 `EMBEDDING_MODEL` 时使用 ChromaDB 内置本地模型，首次使用需从网络下载（约 80MB）。如服务器网络受限，请配置云厂商 Embedding 模型，例如：
-
-```env
-EMBEDDING_MODEL=qwen/text-embedding-v3
-EMBEDDING_API_KEY=你的密钥
-```
+Embedding 使用内置本地模型（all-MiniLM-L6-v2，约 87MB，已打入镜像），正常情况下离线可用、无需下载。
+如自行精简过镜像或缓存卷异常，可检查容器内 `/root/.cache/chroma/onnx_models` 是否存在，或重新使用官方镜像构建。
 
 ### 3. 挂件显示了但发消息报"网络异常"
 

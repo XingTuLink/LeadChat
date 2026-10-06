@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.6.0-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.1-orange.svg" alt="Version"/>
 </p>
 
 **Embed an AI assistant into any web system with one line of code — conversational AI that connects users with your business.**
@@ -174,25 +174,31 @@ Code repositories (all three are kept in sync; Gitee / AtomGit work better from 
 ```bash
 git clone https://github.com/XingTuLink/LeadChat.git
 cd LeadChat
-cp .env.example .env
-# Edit .env: at least change ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-After startup, open the admin panel and add a chat model under "Models", then activate it (use "Test" to verify connectivity first).
+It starts with zero configuration (SQLite + built-in local embeddings + default admin password `admin123`). To override defaults such as the password, run `cp .env.example .env` and adjust as needed.
+
+After startup, open the admin panel, pick a public or private model service under "Models", fill in the credentials and activate the model (use "Test" to verify connectivity first).
 
 | Entry point | URL |
 |---|---|
-| Admin panel | `http://your-server:11999/admin/` (password = the ADMIN_PASSWORD you set in .env) |
+| Admin panel | `http://your-server:11999/admin/` (default password `admin123`, overridable via `ADMIN_PASSWORD`) |
 | Widget demo page | `http://your-server:11999/widget/demo.html` |
 
 ### Embedding into any web system
 
-**Option 1: one-line script (simplest, default assistant)**
+**Option 1: one-line script (simplest)**
 
 ```html
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
+<!-- Default assistant: no assistant attribute -->
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
+
+<!-- Specific assistant: add data-assistant. The admin "Assistants" list gives you a copyable embed code per assistant -->
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1" data-assistant="support"></script>
 ```
+
+Each assistant has its own prompt, welcome message, auto-popup, appearance and collection rules (unset items inherit global settings). So **one LeadChat instance can serve many websites/systems at once**: different sites can embed different assistants, or share the same one. An unknown or disabled id silently falls back to the default assistant.
 
 **Option 2: Embed API (specific assistant + host context; for SPAs / business systems)**
 
@@ -209,7 +215,7 @@ After startup, open the admin panel and add a chat model under "Models", then ac
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.0"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
 <script>
   // Context can be updated at runtime (e.g. after SPA route changes)
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -217,7 +223,7 @@ After startup, open the admin panel and add a chat model under "Models", then ac
 </script>
 ```
 
-Mount different assistants on different pages: `support` on after-sales pages, `"internal"` on internal systems, and a sales-lead assistant on marketing pages if you need one — one backend serves every scenario; with no assistant specified, the default assistant always stays pure Q&A.
+Mount different assistants on different pages: `support` on after-sales pages, `"internal"` on internal systems, and a sales-lead assistant on marketing pages if you need one — one backend serves every scenario; with no assistant specified, the default assistant is used (its collection and reception settings are editable in the assistant list).
 
 **LeadChat API**
 
@@ -253,37 +259,36 @@ python -m venv .venv
 .venv\Scripts\activate            # Windows
 source .venv/bin/activate         # macOS / Linux
 pip install -r backend/requirements.txt
-cp .env.example .env              # fill in your settings
 cd backend
 uvicorn app.main:app --reload --port 11999
 ```
 
-Tables are created and default settings initialized automatically on startup. On the first knowledge-base upload the local embedding model (~80MB) is prepared automatically (you can also place it under `~/.cache/chroma/onnx_models/` in advance).
+It starts without a `.env` file (default password `admin123`). Outside Docker, the first knowledge-base upload downloads the built-in embedding model (~80MB; you can also place it under `~/.cache/chroma/onnx_models/` in advance); the Docker image ships it preloaded.
 
 ## Supported LLM providers
 
-Add models in the admin panel ("Models"); multiple models can be switched between at any time:
+Add models in the admin panel ("Models"), grouped into **Public models** and **Private models**; multiple models can be switched between at any time:
 
-| Provider | Example models | Notes |
-|--------|---------|------|
-| DeepSeek | `deepseek-chat` | Good price/performance |
-| OpenAI | `gpt-4o-mini` | |
-| Qwen | `qwen-plus` / `qwen-turbo` | Alibaba Cloud DashScope |
-| Zhipu GLM | `glm-4-flash` / `glm-4-air` | Free-tier models available |
-| Ollama | `llama3.1` / `qwen2.5` | Fully local; inside containers use base `http://host.docker.internal:11434` |
-| Custom | Any OpenAI-compatible model | Requires a custom API base |
+| Group | Service | Example models | Notes |
+|------|---------|---------|------|
+| Public | DeepSeek | `deepseek-chat` / `deepseek-v4-pro` | Good price/performance |
+| Public | OpenAI | `gpt-5.4-mini` / `gpt-5.4-nano` | |
+| Public | Qwen | `qwen-plus` / `qwen3.8-max` | Alibaba Cloud Bailian; `qwen-plus` always points to the latest version |
+| Public | Zhipu GLM | `glm-4.7-flash` / `glm-5.3` | `glm-4.7-flash` is free |
+| Private | Ollama | `qwen3.5` / `gpt-oss:20b` | Fully local; inside containers use base `http://host.docker.internal:11434` |
+| Private | OpenAI-compatible service | Any compatible model | vLLM / self-hosted gateways; API base required |
 
-Embeddings can be switched to a cloud model via `EMBEDDING_MODEL` (include a provider prefix, e.g. `qwen/text-embedding-v3`); leave it empty to use ChromaDB's built-in local model (zero config, zero API cost, data stays on your server).
+Embeddings use the built-in local model (all-MiniLM-L6-v2), shipped with the image: offline-ready, zero API cost, data stays on your server, and no configuration is needed.
 
 ## Admin panel
 
 - **Dashboard** — today's / total conversations, collected data, messages and document stats
-- **Models** — manage multiple chat models (provider / model ID / key / base), connectivity test, instant switching
+- **Models** — pick from grouped public/private model services, manage multiple chat models, connectivity test, instant switching
 - **Assistants** — create from scenario templates, edit Instructions, collection mode (ask/collect) and data type, arrange business fields, context whitelist and UI overrides; generate both embed snippets with one click
 - **Conversations** — full chat history, knowledge sources cited by the AI, detail drawer; close / delete supported
 - **Knowledge base** — drag-and-drop upload with two-stage progress (transfer percentage → parsing & vectorizing), automatic chunking and vectorization
 - **Collected data** — structured records captured by each assistant (tickets / requirements / appointments / custom / leads), filterable by type and assistant, with status workflow
-- **System settings** — global fallback for the default assistant: company info, system prompt, business fields (empty by default) and collection guide, widget theme color / icon / welcome message / auto-popup, branding footer toggle
+- **System settings** — global defaults: company info, system prompt, and the default widget skin (theme color / icon / position). Per-assistant welcome message, auto-popup (off by default) and collection rules live in the assistant editor
 
 ## Configuration
 
@@ -291,7 +296,7 @@ See [docs/CONFIG.md](docs/CONFIG.md) for the full reference. Chat models are con
 
 | Variable | Default | Description |
 |---|---|---|
-| `ADMIN_PASSWORD` | `change_this_before_running` | Admin password — change before first launch |
+| `ADMIN_PASSWORD` | `admin123` | Admin password; override for production deployments |
 | `DATABASE_URL` | SQLite | Switch to PostgreSQL: `postgresql+asyncpg://user:pass@host:5432/leadchat` |
 | `CORS_ORIGINS` | `*` | Allowed CORS origins |
 | `CONVERSATION_TIMEOUT_MINUTES` | `30` | Idle auto-close threshold; `0` disables it |
@@ -388,6 +393,8 @@ LeadChat focuses on the Web AI Interaction Layer. It is not meant to become an A
 - [x] v0.3 Trial run on our own website; iterated and fixed the problems that came up
 - [x] v0.4 Configurable assistants, Business Fields, Collected Data, Web Context, Embed API
 - [x] v0.5.x Assistant-first refactor, SSE streaming, Markdown rendering and other pre-release polish
+- [x] v0.6.0 Multi-model switching, provider-based model management, built-in local embeddings
+- [x] v0.6.1 Improving LeadChat usability: zero-config startup, public/private provider grouping with real brand icons, simpler admin configuration
 
 ### v0.6 — Interaction Experience
 

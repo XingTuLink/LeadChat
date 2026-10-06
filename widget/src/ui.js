@@ -78,7 +78,7 @@ function initWidget(opts, remote) {
     || "你好，我是这个系统的 AI 助手，可以帮你查询信息、回答问题或协助完成相关操作。";
   var popupMessage = (remote && remote.popup_message) || welcome;
   var popupDelay = parseFloat(remote && remote.auto_popup_delay);
-  if (isNaN(popupDelay)) popupDelay = 3;
+  if (isNaN(popupDelay) || popupDelay < 0) popupDelay = 0;
   var icon = opts.icon || (remote && remote.widget_icon) || "chat";
   var footerEnabled = !(remote && remote.footer_enabled === false);
   // 结构化业务字段由后端在对话中自动采集，挂件不渲染任何表单

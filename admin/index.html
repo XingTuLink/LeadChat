@@ -136,6 +136,62 @@ html, body { margin: 0; padding: 0; }
 }
 .embed-code textarea { font-family: ui-monospace, Consolas, monospace !important; font-size: 12px; }
 
+/* ---------- 开始使用（引导） ---------- */
+.onboard-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.onboard-progress { font-size: 13px; font-weight: 600; color: var(--lc-primary); }
+.onboard-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 8px;
+  border: 1px solid var(--lc-border); border-radius: var(--lc-radius); background: #fff;
+}
+.onboard-row.done { background: #f8fafc; border-color: #eef2f7; }
+.step-no.ok { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.onboard-text { flex: 1; min-width: 0; }
+.onboard-text b { font-size: 13.5px; color: var(--lc-text); }
+.onboard-row.done .onboard-text b { color: var(--lc-text-2); }
+.onboard-embed { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--lc-border); }
+
+/* ---------- 高级选项折叠 ---------- */
+.adv-toggle { font-size: 12.5px; color: var(--lc-text-3); cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 4px; }
+.adv-toggle:hover { color: var(--lc-primary); }
+.adv-box {
+  margin-top: 10px; padding: 12px 14px 2px; border: 1px solid var(--lc-border);
+  border-radius: var(--lc-radius); background: #f9fafb;
+}
+.quick-pick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.quick-pick .pick {
+  padding: 4px 10px; border: 1px solid var(--lc-border); border-radius: var(--lc-radius);
+  background: #fff; font-size: 12px; color: var(--lc-text-2); cursor: pointer;
+}
+.quick-pick .pick:hover { border-color: var(--lc-primary); color: var(--lc-primary); background: #eff6ff; }
+.prompt-preview {
+  margin: 0; white-space: pre-wrap; word-break: break-word;
+  font-family: inherit; font-size: 12.5px; line-height: 1.7; color: var(--lc-text-2);
+}
+
+/* ---------- 模型服务选择（公有 / 私有分组卡片） ---------- */
+.pv-group-title { font-size: 12px; font-weight: 600; color: var(--lc-text-3); margin: 12px 0 6px; }
+.pv-group-title:first-child { margin-top: 0; }
+.pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pv-card {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border: 1px solid var(--lc-border); border-radius: var(--lc-radius);
+  background: #fff; cursor: pointer; user-select: none; transition: border-color .15s, background .15s;
+}
+.pv-card:hover { border-color: var(--lc-primary); }
+.pv-card.active { border-color: var(--lc-primary); background: #eff6ff; box-shadow: inset 0 0 0 1px var(--lc-primary); }
+.pv-logo {
+  width: 26px; height: 26px; flex: none; border: 1px solid var(--lc-border); border-radius: 6px;
+  background: #fff; display: inline-flex; align-items: center; justify-content: center;
+}
+.pv-logo img { width: 17px; height: 17px; object-fit: contain; }
+.pv-logo svg { width: 15px; height: 15px; }
+.pv-name { font-size: 13px; color: var(--lc-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-card.active .pv-name { color: var(--lc-primary); font-weight: 600; }
+.provider-cell { display: inline-flex; align-items: center; gap: 7px; }
+.provider-cell .pv-logo { width: 18px; height: 18px; border: none; border-radius: 0; background: transparent; }
+.provider-cell .pv-logo img { width: 16px; height: 16px; }
+.provider-cell .pv-logo svg { width: 15px; height: 15px; }
+
 /* ---------- 通用 ---------- */
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .muted { color: var(--lc-text-3); font-size: 12px; }
@@ -296,7 +352,7 @@ html, body { margin: 0; padding: 0; }
       <header class="main-header">
         <span class="crumb">{{ pageTitle }}</span>
         <div class="header-right">
-          <span class="ver-tag">v0.6.0</span>
+          <span class="ver-tag">v0.6.1</span>
           <a-button type="link" size="small" @click="logout">退出登录</a-button>
         </div>
       </header>
@@ -313,11 +369,26 @@ html, body { margin: 0; padding: 0; }
             </div>
           </div>
           <a-card class="guide-card" title="开始使用">
-            <div class="guide-steps">
-              <div><span class="step-no">1</span>在「知识库」上传你的产品文档（PDF / DOCX / TXT / MD），AI 将基于文档内容回答</div>
-              <div><span class="step-no">2</span>默认助手开箱即是纯问答；需要采集时，在「多助手」按场景创建助手（通用问答 / 售后客服 / 内部 Copilot / 需求收集 / 销售线索），配置话术与采集字段</div>
-              <div><span class="step-no">3</span>把下面这行代码粘贴到任何 Web 系统（&lt;/body&gt; 前），即嵌入一个 AI 助手：</div>
-              <a-textarea class="embed-code" :value="embedCode" readonly :rows="2" style="margin-top:6px"></a-textarea>
+            <div class="onboard-head">
+              <span class="onboard-progress">已完成 {{ onboardingDoneCount }} / {{ onboardingSteps.length }}</span>
+              <span class="muted">完成下面两步，AI 助手就能在你的网站上接待访客</span>
+            </div>
+            <div class="onboard-row" v-for="(s, i) in onboardingSteps" :key="s.key" :class="{ done: s.done }">
+              <span class="step-no" :class="{ ok: s.done }">{{ s.done ? '✓' : i + 1 }}</span>
+              <div class="onboard-text">
+                <b>{{ s.title }}</b>
+                <div class="muted">{{ s.done ? '已完成' : s.desc }}</div>
+              </div>
+              <a-button v-if="!s.done" type="primary" size="small" @click="switchPage(s.page)">{{ s.btn }}</a-button>
+              <a-tag v-else color="green">已完成</a-tag>
+            </div>
+            <div class="onboard-embed">
+              <div class="muted" style="margin-bottom:6px">
+                第 3 步：把下面这行代码粘贴到你的网站（&lt;/body&gt; 前）。
+                想让它回答得更准？再到「知识库」上传产品文档（PDF / DOCX / TXT / MD）。
+              </div>
+              <a-textarea class="embed-code" :value="embedCode" readonly :rows="2"></a-textarea>
+              <a-button size="small" style="margin-top:8px" @click="copyText(embedCode)">复制代码</a-button>
             </div>
           </a-card>
         </div>
@@ -330,8 +401,8 @@ html, body { margin: 0; padding: 0; }
             <span class="muted">同一时刻只有一个模型生效；切换立即生效，无需重启服务</span>
           </div>
           <a-alert v-if="!modelLoading && models.length === 0" type="warning" show-icon
-                   message="尚未配置模型，对话功能暂不可用"
-                   description="点击「添加模型」配置一个对话模型并激活，之后挂件即可正常对话。"
+                   message="还差一步：配置 AI 模型"
+                   description="选择公有或私有模型服务，按提示填写即可，保存后自动启用，挂件即可正常对话。"
                    style="margin-bottom:12px"></a-alert>
           <a-table :columns="modelColumns" :data-source="models" row-key="id" size="middle"
                    :loading="modelLoading" :pagination="false">
@@ -343,7 +414,21 @@ html, body { margin: 0; padding: 0; }
                 <div class="muted">{{ record.id }}</div>
               </template>
               <template v-else-if="column.key === 'provider'">
-                <a-tag>{{ providerLabel(record.provider) }}</a-tag>
+                <span class="provider-cell">
+                  <span class="pv-logo">
+                    <img v-if="providerMeta(record.provider).icon"
+                         :src="'assets/vendor/logos/' + providerMeta(record.provider).icon"
+                         :alt="providerLabel(record.provider)">
+                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="7" rx="2"></rect>
+                      <rect x="3" y="14" width="18" height="7" rx="2"></rect>
+                      <line x1="7" y1="6.5" x2="7.01" y2="6.5"></line>
+                      <line x1="7" y1="17.5" x2="7.01" y2="17.5"></line>
+                    </svg>
+                  </span>
+                  {{ providerLabel(record.provider) }}
+                </span>
               </template>
               <template v-else-if="column.key === 'model_name'">
                 <span class="mono">{{ record.model_name }}</span>
@@ -372,27 +457,77 @@ html, body { margin: 0; padding: 0; }
         <!-- 模型添加/编辑弹窗 -->
         <a-modal v-model:open="modelModal" :title="modelEditing ? '编辑模型' : '添加模型'"
                  :confirm-loading="modelSaving" ok-text="保存" cancel-text="取消"
-                 @ok="saveModel">
+                 width="560px" @ok="saveModel">
           <a-form layout="vertical" style="margin-top:12px">
-            <a-form-item label="名称" required>
-              <a-input v-model:value="modelForm.name" placeholder="便于识别的名称，如 业务对话-DeepSeek"></a-input>
+            <a-form-item required>
+              <template #label><span style="font-weight:600">选择模型服务</span></template>
+              <div class="pv-group-title">公有模型（云端 API）</div>
+              <div class="pv-grid">
+                <div v-for="p in publicProviders" :key="p.key" class="pv-card"
+                     :class="{ active: modelForm.provider === p.key }"
+                     @click="selectProvider(p.key)">
+                  <span class="pv-logo">
+                    <img v-if="p.icon" :src="'assets/vendor/logos/' + p.icon" :alt="p.label">
+                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="7" rx="2"></rect>
+                      <rect x="3" y="14" width="18" height="7" rx="2"></rect>
+                      <line x1="7" y1="6.5" x2="7.01" y2="6.5"></line>
+                      <line x1="7" y1="17.5" x2="7.01" y2="17.5"></line>
+                    </svg>
+                  </span>
+                  <span class="pv-name">{{ p.label }}</span>
+                </div>
+              </div>
+              <div class="pv-group-title">私有模型（本地 / 自建服务）</div>
+              <div class="pv-grid">
+                <div v-for="p in privateProviders" :key="p.key" class="pv-card"
+                     :class="{ active: modelForm.provider === p.key }"
+                     @click="selectProvider(p.key)">
+                  <span class="pv-logo">
+                    <img v-if="p.icon" :src="'assets/vendor/logos/' + p.icon" :alt="p.label">
+                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="7" rx="2"></rect>
+                      <rect x="3" y="14" width="18" height="7" rx="2"></rect>
+                      <line x1="7" y1="6.5" x2="7.01" y2="6.5"></line>
+                      <line x1="7" y1="17.5" x2="7.01" y2="17.5"></line>
+                    </svg>
+                  </span>
+                  <span class="pv-name">{{ p.label }}</span>
+                </div>
+              </div>
             </a-form-item>
-            <a-form-item label="厂商" required>
-              <a-select v-model:value="modelForm.provider" :options="providerOptions"></a-select>
-            </a-form-item>
-            <a-form-item label="模型标识" required>
-              <a-input v-model:value="modelForm.model_name" placeholder="如 deepseek-chat / gpt-4o-mini"></a-input>
-            </a-form-item>
-            <a-form-item label="API Key">
+
+            <a-form-item v-if="isPublicProvider" label="API Key" required>
               <a-input-password v-model:value="modelForm.api_key"
-                                :placeholder="modelEditing ? '留空表示不修改' : '本地模型（Ollama）可留空'"></a-input-password>
+                                :placeholder="modelEditing ? '留空表示不修改' : '粘贴厂商后台生成的 API Key'"></a-input-password>
+              <div class="muted" style="margin-top:4px">
+                {{ currentPreset.keyHint }}
+                <a v-if="currentPreset.keyUrl" :href="currentPreset.keyUrl" target="_blank" rel="noopener noreferrer">前往获取 →</a>
+              </div>
             </a-form-item>
-            <a-form-item label="API 端点">
-              <a-input v-model:value="modelForm.api_base"
-                       :placeholder="providerBasePlaceholder"></a-input>
+
+            <template v-else>
+              <a-form-item label="接口端点" :required="modelForm.provider === 'custom'">
+                <a-input v-model:value="modelForm.api_base" :placeholder="providerBasePlaceholder"></a-input>
+                <div class="muted" style="margin-top:4px">{{ endpointHint }}</div>
+              </a-form-item>
+              <a-form-item v-if="modelForm.provider === 'custom'" label="API Key（可选）">
+                <a-input-password v-model:value="modelForm.api_key"
+                                  placeholder="端点无需鉴权可留空；编辑时留空表示不修改"></a-input-password>
+              </a-form-item>
+            </template>
+
+            <a-form-item label="选择模型" required>
+              <a-select v-if="presetModelOptions.length" v-model:value="modelForm.model_name"
+                        :options="presetModelOptions" show-search allow-clear></a-select>
+              <a-input v-else v-model:value="modelForm.model_name" placeholder="填写模型名，如 qwen2.5 / your-model-name"></a-input>
+              <div class="muted" style="margin-top:4px">不确定选哪个？用默认推荐的即可</div>
             </a-form-item>
-            <a-form-item v-if="!modelEditing">
-              <a-checkbox v-model:checked="modelForm.activate_now">添加后立即激活</a-checkbox>
+
+            <a-form-item v-if="!modelEditing" style="margin-top:14px;margin-bottom:0">
+              <a-checkbox v-model:checked="modelForm.activate_now">保存后立即启用（推荐）</a-checkbox>
             </a-form-item>
           </a-form>
         </a-modal>
@@ -483,7 +618,7 @@ html, body { margin: 0; padding: 0; }
           <div class="toolbar">
             <a-button type="primary" @click="openCreateAssistant">+ 新建助手</a-button>
             <a-button @click="loadAssistants">刷新</a-button>
-            <span class="muted">不同助手可配置不同话术、业务字段与嵌入代码；默认助手为纯问答，留空项继承「系统设置」全局配置</span>
+            <span class="muted">一套 LeadChat 可同时服务多个网站/系统：每个助手有独立嵌入代码与专属外观、欢迎语、采集规则；不同站点可嵌不同助手，也可共用同一助手；未自定义项继承系统设置</span>
           </div>
           <a-table :columns="assistantColumns" :data-source="assistants" row-key="id" size="middle"
                    :loading="assistantLoading" :pagination="false">
@@ -571,66 +706,48 @@ html, body { margin: 0; padding: 0; }
         <!-- 系统设置 -->
         <div v-if="page==='settings'">
           <a-card class="setting-section" title="AI 话术">
+            <div class="muted" style="margin:-8px 0 14px">
+              只填下面两项即可，AI 话术会自动生成。需要精调时再打开「自定义话术」。
+            </div>
             <a-form :label-col="{ style: { width: '110px' } }">
               <a-form-item label="公司名称">
-                <a-input v-model:value="settingsForm.company_name" style="max-width:320px"></a-input>
+                <a-input v-model:value="settingsForm.company_name" style="max-width:320px"
+                         placeholder="例如：栈上月明"></a-input>
               </a-form-item>
               <a-form-item label="业务描述">
                 <a-input v-model:value="settingsForm.business_description" style="max-width:520px"
                          placeholder="例如：企业官网建设与SEO优化服务"></a-input>
               </a-form-item>
-              <a-form-item label="系统提示词">
-                <a-textarea v-model:value="settingsForm.system_prompt" :rows="8"></a-textarea>
-                <div class="muted">可用变量：{company_name} {business_description}</div>
+              <a-form-item label="AI 话术">
+                <div style="width:100%">
+                  <a-switch v-model:checked="settingsCustomPrompt" size="small"></a-switch>
+                  <span class="muted" style="margin-left:8px">自定义话术（默认已按上面两项自动生成，通常不用改）</span>
+                  <div v-if="settingsCustomPrompt" style="margin-top:10px">
+                    <a-textarea v-model:value="settingsForm.system_prompt" :rows="8"></a-textarea>
+                    <div class="muted" style="margin-top:4px">
+                      话术中的变量会自动替换为：公司名称＝{{ settingsForm.company_name || "（未填写）" }}；
+                      业务描述＝{{ settingsForm.business_description || "（未填写）" }}
+                    </div>
+                  </div>
+                  <div v-else class="adv-box" style="margin-top:10px">
+                    <div class="muted" style="margin-bottom:8px">当前生效的话术（自动生成）：</div>
+                    <pre class="prompt-preview">{{ defaultSystemPrompt }}</pre>
+                  </div>
+                </div>
               </a-form-item>
             </a-form>
+            <div class="muted" style="margin-top:4px">
+              默认助手的信息采集、欢迎语、自动弹出与独立外观，请在
+              <a @click="switchPage('assistants')" style="color:var(--lc-primary);cursor:pointer">「多助手」</a>
+              中编辑带「默认」标签的助手。
+            </div>
           </a-card>
 
-          <a-card class="setting-section" title="业务字段与采集（默认助手 · 全局回退）">
+          <a-card class="setting-section" title="挂件外观（所有助手的默认皮肤）">
             <div class="muted" style="margin:-8px 0 14px">
-              默认开箱为纯问答、字段列表为空，不会向访客索取任何信息。仅当默认助手切换到「主动采集」模式时才会使用这里的引导话术与业务字段；其他助手的独立配置请在「多助手」页维护。
+              这里是所有助手未自定义时继承的默认皮肤；欢迎语与自动弹出等接待设置已移至「多助手 → 编辑助手 → 接待设置」，默认不自动弹出。
             </div>
             <a-form :label-col="{ style: { width: '110px' } }">
-              <a-form-item label="引导话术">
-                <a-textarea v-model:value="settingsForm.collect_guide_message" :rows="2"
-                            placeholder="采集业务信息时，AI 追问缺失字段的整体语气参考"></a-textarea>
-              </a-form-item>
-              <a-form-item label="业务字段">
-                <div>
-                  <div class="field-row" v-for="(f, i) in settingsForm.formFields" :key="i">
-                    <a-input v-model:value="f.key" placeholder="字段标识，如 company / budget" style="width:180px" size="small"></a-input>
-                    <a-input v-model:value="f.label" placeholder="显示标签，如 公司名称" style="width:180px" size="small"></a-input>
-                    <a-select v-model:value="f.type" size="small" style="width:108px" :options="fieldTypeOptions"></a-select>
-                    <a-checkbox v-model:checked="f.required">必填</a-checkbox>
-                    <a-button type="link" danger size="small" style="padding:0"
-                              @click="settingsForm.formFields.splice(i, 1)">移除</a-button>
-                  </div>
-                  <a-button size="small" @click="settingsForm.formFields.push({ key: '', label: '', type: 'string', required: false })">
-                    + 添加字段
-                  </a-button>
-                  <div class="muted" style="margin-top:6px">字段标识仅允许小写字母、数字、下划线 / 中划线；电话、邮箱、数字等类型带格式校验</div>
-                </div>
-              </a-form-item>
-            </a-form>
-          </a-card>
-
-          <a-card class="setting-section" title="挂件外观">
-            <a-form :label-col="{ style: { width: '110px' } }">
-              <a-form-item label="欢迎语">
-                <a-input v-model:value="settingsForm.welcome_message" style="max-width:520px"></a-input>
-                <div class="muted" style="margin-top:4px">访客打开聊天窗口时，自动发送的第一条消息</div>
-              </a-form-item>
-              <a-form-item label="自动弹出">
-                <div class="color-row">
-                  <a-input-number v-model:value="settingsForm.auto_popup_delay" :min="0" :max="600"
-                                  :step="1" style="width:110px" addon-after="秒"></a-input>
-                  <span class="muted">访客进入页面后延迟弹出气泡（填 0 关闭自动弹出）</span>
-                </div>
-              </a-form-item>
-              <a-form-item label="弹出文案">
-                <a-input v-model:value="settingsForm.popup_message" style="max-width:520px"
-                         placeholder="例如：您好，请问有什么可以帮您吗？"></a-input>
-              </a-form-item>
               <a-form-item label="主题色">
                 <div class="color-row">
                   <input type="color" v-model="settingsForm.widget_theme" class="color-input"/>
@@ -700,8 +817,8 @@ html, body { margin: 0; padding: 0; }
   <a-drawer v-model:open="assistantDrawer" :title="assistantEditing ? '编辑助手' : '新建助手'"
             :width="780" placement="right">
     <a-alert v-if="assistantForm.id === 'default'" type="info" show-icon style="margin-bottom:16px"
-             message="默认助手说明"
-             description="话术、外观、字段留空时继承「系统设置」的全局配置；一旦在此填写自定义值，将覆盖全局配置。"></a-alert>
+             message="这是默认助手（嵌入代码不带助手标识时使用它）"
+             description="它的采集、接待与挂件外观就是访客看到的全局默认；话术与外观留空的项目继承「系统设置」。其他助手留空项同样回退「系统设置」。"></a-alert>
     <a-form layout="vertical">
       <a-form-item label="场景模板" required>
         <a-select v-model:value="assistantForm.scenario" :options="scenarioOptions"
@@ -709,73 +826,119 @@ html, body { margin: 0; padding: 0; }
                   @change="onScenarioChange"></a-select>
         <div class="muted">{{ scenarioHint }}</div>
       </a-form-item>
-      <a-form-item v-if="!assistantEditing" label="助手 ID">
-        <a-input v-model:value="assistantForm.id" style="max-width:360px"
-                 placeholder="留空自动生成；嵌入代码将使用该 ID，如 support"></a-input>
-        <div class="muted">小写字母 / 数字 / 中划线 / 下划线，32 字符内，创建后不可修改</div>
-      </a-form-item>
       <a-form-item label="名称" required>
         <a-input v-model:value="assistantForm.name" style="max-width:360px" placeholder="如：官网售后助手"></a-input>
       </a-form-item>
-      <a-form-item label="描述">
+      <a-form-item label="用途说明">
         <a-textarea v-model:value="assistantForm.description" :rows="2"
                     placeholder="仅后台展示，帮助团队成员理解用途"></a-textarea>
       </a-form-item>
-      <a-form-item label="Instructions（系统提示词）">
+      <a-form-item label="AI 话术">
         <a-textarea v-model:value="assistantForm.system_prompt" :rows="7"></a-textarea>
-        <div class="muted">可用变量：{company_name} {business_description}；留空表示继承系统设置中的全局提示词</div>
+        <div class="muted">已按「系统设置」里的公司名称、业务描述自动填好，可直接修改；留空则沿用系统设置的全局话术</div>
+        <div v-if="!hasBasicInfo" style="color:#d46b08;margin-top:4px">
+          建议先到「系统设置 → AI 话术」填写公司名称与业务描述，生成的话术会更贴合你的业务
+        </div>
       </a-form-item>
-      <a-form-item label="采集模式">
+      <a-form-item label="是否收集客户信息">
         <a-radio-group v-model:value="assistantForm.collect_mode">
-          <a-radio value="collect">主动采集</a-radio>
-          <a-radio value="ask">仅问答</a-radio>
+          <a-radio value="ask">不收集，只回答</a-radio>
+          <a-radio value="collect">收集（识别到需求时自然引导填写）</a-radio>
         </a-radio-group>
-        <div class="muted">主动采集：识别业务意图后自然引导用户提供信息并结构化落库；仅问答：不采集任何信息</div>
       </a-form-item>
-      <a-form-item label="采集数据类型">
+      <a-form-item v-if="assistantForm.collect_mode === 'collect'" label="收集内容归类">
         <a-select v-model:value="assistantForm.collect_data_type" :options="dataTypeOptions"
-                  :disabled="assistantForm.collect_mode === 'ask'" style="width:240px"></a-select>
-        <div class="muted">所有采集结果统一进入「采集数据」，可按数据类型筛选查看</div>
+                  style="width:240px"></a-select>
+        <div class="muted">收集到的信息会进入「采集数据」，可按此分类筛选查看</div>
       </a-form-item>
-      <a-form-item label="业务字段">
+      <a-form-item v-if="assistantForm.collect_mode === 'collect'" label="要收集的信息项">
         <div style="width:100%">
           <div class="af-row" v-for="(f, i) in assistantForm.fields" :key="i">
-            <a-input v-model:value="f.key" placeholder="标识，如 order_id" size="small" style="width:130px"></a-input>
-            <a-input v-model:value="f.label" placeholder="标签，如 订单号" size="small" style="width:130px"></a-input>
-            <a-select v-model:value="f.type" size="small" style="width:108px" :options="fieldTypeOptions"></a-select>
+            <a-input v-if="assistantFieldKeys" v-model:value="f.key" placeholder="标识，如 phone" size="small" style="width:130px"></a-input>
+            <a-input v-model:value="f.label" placeholder="信息项名称，如 手机号" size="small" style="width:170px"></a-input>
+            <a-select v-model:value="f.type" size="small" style="width:120px" :options="fieldTypeOptions"></a-select>
             <a-input v-if="f.type === 'enum'" v-model:value="f.optionsText"
-                     placeholder="枚举选项，逗号分隔" size="small" style="flex:1;min-width:160px"></a-input>
+                     placeholder="可选项，逗号分隔" size="small" style="flex:1;min-width:160px"></a-input>
             <a-checkbox v-model:checked="f.required">必填</a-checkbox>
             <a-button type="link" danger size="small" style="padding:0"
                       @click="assistantForm.fields.splice(i, 1)">移除</a-button>
           </div>
-          <a-button size="small" @click="addField">+ 添加字段</a-button>
-          <div class="muted">标识仅允许小写字母、数字、下划线 / 中划线；电话 / 邮箱 / 数字等类型带格式质量门禁，name 字段带称呼质量校验</div>
+          <div class="quick-pick" style="align-items:center">
+            <a-button size="small" @click="addField">+ 添加信息项</a-button>
+            <span class="adv-toggle" @click="assistantFieldKeys = !assistantFieldKeys">
+              {{ assistantFieldKeys ? '▾' : '▸' }} 显示字段标识
+            </span>
+          </div>
+          <div class="muted" style="margin-top:6px">电话 / 邮箱 / 数字等类型会自动做格式校验，无需额外配置</div>
         </div>
       </a-form-item>
-      <a-form-item label="业务上下文白名单">
-        <a-input v-model:value="assistantForm.contextKeys" style="max-width:520px"
-                 placeholder="page, order_id, product_id（留空 = 不限制键名）"></a-input>
-        <div class="muted">嵌入方通过 LeadChat.init 的 context 参数传入宿主上下文；仅白名单键名会进入 Prompt，且服务端只接受扁平标量值</div>
+      <a-form-item v-if="assistantForm.collect_mode === 'collect'" label="引导话术">
+        <a-textarea v-model:value="assistantForm.collect_guide" :rows="2"
+                    placeholder="采集信息时，AI 追问缺失字段的整体语气参考（留空使用默认话术）"></a-textarea>
       </a-form-item>
-      <a-form-item label="挂件外观覆盖（留空继承全局）">
+      <a-form-item label="接待设置（留空使用默认）">
+        <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+          <a-input v-model:value="assistantForm.ui.welcome_message" style="max-width:520px"
+                   placeholder="欢迎语：访客打开聊天窗口看到的第一条消息（留空使用默认欢迎语）"></a-input>
+          <div class="color-row">
+            <a-input-number v-model:value="assistantForm.ui.auto_popup_delay" :min="0" :max="600"
+                            :step="1" style="width:120px" addon-after="秒"></a-input-number>
+            <span class="muted">访客进入页面后延迟几秒自动弹出问候气泡；留空或填 0 表示不自动弹出</span>
+          </div>
+          <a-input v-model:value="assistantForm.ui.popup_message" style="max-width:520px"
+                   placeholder="自动弹出气泡上的文案（留空则使用欢迎语）"></a-input>
+        </div>
+      </a-form-item>
+      <a-form-item label="挂件外观（留空继承系统设置）">
         <div style="width:100%;display:flex;flex-direction:column;gap:10px">
           <a-input v-model:value="assistantForm.ui.title" style="max-width:360px"
                    placeholder="窗口标题（留空继承全局）"></a-input>
-          <a-input v-model:value="assistantForm.ui.welcome_message" style="max-width:520px"
-                   placeholder="欢迎语（留空继承全局）"></a-input>
           <div class="color-row">
             <span class="muted" style="width:56px">主题色</span>
             <input type="color" v-model="assistantForm.ui.theme" class="color-input"/>
-            <a-input v-model:value="assistantForm.ui.theme" style="width:140px" placeholder="#2563EB"></a-input>
+            <a-input v-model:value="assistantForm.ui.theme" style="width:140px" placeholder="留空继承全局"></a-input>
+          </div>
+          <div>
+            <div class="icon-picker">
+              <div v-for="ic in iconPresets" :key="ic.key" class="icon-opt"
+                   :class="{ active: assistantForm.ui.icon === ic.key }"
+                   :title="ic.label" v-html="ic.svg"
+                   @click="assistantForm.ui.icon = ic.key"></div>
+              <div v-if="assistantCustomIcon" class="icon-opt active" title="自定义图标">
+                <img :src="assistantForm.ui.icon" alt=""/>
+              </div>
+              <a-button size="small" @click="$refs.assistantIconFile.click()">上传图标</a-button>
+              <a-button v-if="assistantForm.ui.icon" type="link" size="small" style="padding:0"
+                        @click="assistantForm.ui.icon = ''">继承默认</a-button>
+              <input ref="assistantIconFile" type="file" accept="image/*" style="display:none"
+                     @change="onAssistantIconFile"/>
+            </div>
+            <div class="muted" style="margin-top:6px">预设图标点选即用，或上传 PNG / JPG / SVG（≤200KB）作为自定义图标</div>
           </div>
           <a-radio-group v-model:value="assistantForm.ui.position">
             <a-radio-button value="right">右下角</a-radio-button>
             <a-radio-button value="left">左下角</a-radio-button>
-            <a-radio-button value="">继承全局</a-radio-button>
+            <a-radio-button value="">继承系统设置</a-radio-button>
           </a-radio-group>
         </div>
       </a-form-item>
+      <div>
+        <span class="adv-toggle" @click="assistantAdvanced = !assistantAdvanced">
+          {{ assistantAdvanced ? '▾' : '▸' }} 高级设置（英文标识、业务上下文白名单）
+        </span>
+        <div v-if="assistantAdvanced" class="adv-box">
+          <a-form-item v-if="!assistantEditing" label="英文标识">
+            <a-input v-model:value="assistantForm.id" style="max-width:360px"
+                     placeholder="留空自动生成；嵌入代码会用到该标识"></a-input>
+            <div class="muted">小写字母 / 数字 / 中划线 / 下划线，32 字符内，创建后不可修改</div>
+          </a-form-item>
+          <a-form-item label="业务上下文白名单">
+            <a-input v-model:value="assistantForm.contextKeys" style="max-width:520px"
+                     placeholder="page, order_id, product_id（留空 = 不限制键名）"></a-input>
+            <div class="muted">嵌入方通过 LeadChat.init 的 context 参数传入宿主上下文；仅白名单键名会进入 Prompt</div>
+          </a-form-item>
+        </div>
+      </div>
     </a-form>
     <template #footer>
       <a-button @click="assistantDrawer = false">取消</a-button>
@@ -786,6 +949,10 @@ html, body { margin: 0; padding: 0; }
   <!-- 嵌入代码弹窗 -->
   <a-modal v-model:open="embedModal" :title="'嵌入代码 · ' + (embedRecord ? embedRecord.name : '')"
            :footer="null" width="720px">
+    <a-alert type="info" show-icon style="margin-bottom:14px"
+             :message="embedRecord && embedRecord.id === 'default'
+               ? '这是默认助手的嵌入代码：不带助手标识，任何网站嵌入它都使用默认助手。'
+               : '代码已带 data-assistant 标识，嵌入任意网站都将使用「' + (embedRecord ? embedRecord.name : '') + '」及其专属外观与接待设置。'"></a-alert>
     <div class="muted" style="margin-bottom:6px">方式一：script 属性（最简，一行代码）</div>
     <a-textarea class="embed-code" :value="scriptEmbed" readonly :rows="3"></a-textarea>
     <a-button size="small" style="margin:6px 0 16px" @click="copyText(scriptEmbed)">复制代码</a-button>
@@ -994,15 +1161,14 @@ const app = Vue.createApp({
       modelColumns: [
         { title: "名称", key: "name" },
         { title: "厂商", key: "provider", width: 120 },
-        { title: "模型标识", key: "model_name", width: 160 },
-        { title: "API 端点", key: "api_base" },
+        { title: "模型", key: "model_name", width: 160 },
+        { title: "接口端点", key: "api_base" },
         { title: "操作", key: "action", width: 210 }
       ],
-      modelProviders: [],
       modelModal: false, modelEditing: "", modelSaving: false, modelTesting: "",
       modelForm: {
-        name: "", provider: "openai", model_name: "",
-        api_key: "", api_base: "", activate_now: false
+        provider: "deepseek", model_name: "deepseek-chat",
+        api_key: "", api_base: "", activate_now: true
       },
       // 表格列定义
       convColumns: [
@@ -1077,10 +1243,8 @@ const app = Vue.createApp({
       // 设置
       settingsLoaded: false,
       settingsForm: {
-        system_prompt: "", welcome_message: "", popup_message: "", auto_popup_delay: 3,
-        collect_guide_message: "",
+        system_prompt: "",
         company_name: "", business_description: "",
-        formFields: [],
         widget_theme: "#4F46E5", widget_position: "right", widget_icon: "chat"
       },
       iconPresets: [
@@ -1089,7 +1253,43 @@ const app = Vue.createApp({
         { key: "headset", label: "客服耳机", svg: '<svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 0 0-9 9v7a3 3 0 0 0 3 3h3v-8H5v-2a7 7 0 0 1 14 0v2h-4v8h3a3 3 0 0 0 3-3v-7a9 9 0 0 0-9-9z"/></svg>' },
         { key: "spark", label: "星光", svg: '<svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>' },
         { key: "smile", label: "笑脸", svg: '<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8.3 4.6a1 1 0 0 1 1.4.2 4.2 4.2 0 0 0 6.8 0 1 1 0 1 1 1.6 1.2 6.2 6.2 0 0 1-10 0 1 1 0 0 1 .2-1.4z"/></svg>' }
-      ]
+      ],
+      // 后台默认话术（与后端 DEFAULT_CONFIG.system_prompt 保持一致，含变量）
+      defaultSystemPrompt:
+        "你是{company_name}的AI助手，嵌入在用户正在使用的 Web 系统中。\n\n" +
+        "你的职责：\n" +
+        "1. 专业、友好地回答用户关于{business_description}的问题\n" +
+        "2. 优先依据知识库资料作答；资料不足时诚实告知，不编造信息\n" +
+        "3. 在需要时协助用户查询信息、提交需求或完成相关操作\n\n" +
+        "回答规则：\n" +
+        "- 优先基于【参考资料】回答，不要编造信息\n" +
+        "- 如果参考资料中没有相关信息，诚实告知用户\n" +
+        "- 回答要简洁、有条理，每次不超过200字\n" +
+        "- 使用与用户相同的语言回答",
+      // 模型服务目录：公私分组 + 品牌 logo（本地自托管，离线可用）+ 推荐模型与 Key 获取入口
+      // 模型清单更新于 2026-10；仍可手填任意模型名
+      providerCatalog: [
+        { key: "deepseek", label: "DeepSeek", group: "public", icon: "deepseek.svg",
+          models: ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-pro", "deepseek-flash"],
+          keyHint: "在 DeepSeek 开放平台创建 API Key（deepseek-chat 为 V3.2 稳定版）", keyUrl: "https://platform.deepseek.com/api_keys" },
+        { key: "openai", label: "OpenAI", group: "public", icon: "openai.svg",
+          models: ["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4"],
+          keyHint: "在 OpenAI 平台创建 API Key", keyUrl: "https://platform.openai.com/api-keys" },
+        { key: "qwen", label: "通义千问", group: "public", icon: "qwen.svg",
+          models: ["qwen-plus", "qwen3.8-max", "qwen3.8-flash", "qwen-turbo"],
+          keyHint: "在阿里云百炼控制台创建 API Key（qwen-plus 自动指向最新 Qwen Plus）", keyUrl: "https://bailian.console.aliyun.com/" },
+        { key: "glm", label: "智谱 GLM", group: "public", icon: "zhipu.png",
+          models: ["glm-4.7-flash", "glm-5.3", "glm-5.3-flash"],
+          keyHint: "在智谱开放平台创建 API Key（glm-4.7-flash 免费）", keyUrl: "https://open.bigmodel.cn/usercenter/apikeys" },
+        { key: "ollama", label: "Ollama", group: "private", icon: "ollama.svg",
+          models: ["qwen3.5", "gpt-oss:20b", "gemma4", "llama3.1"],
+          keyHint: "", keyUrl: "" },
+        { key: "custom", label: "OpenAI 兼容服务", group: "private", icon: "",
+          models: [], keyHint: "", keyUrl: "" }
+      ],
+      settingsCustomPrompt: false,
+      assistantAdvanced: false,
+      assistantFieldKeys: false
     };
   },
   computed: {
@@ -1099,15 +1299,54 @@ const app = Vue.createApp({
                     collected: "采集数据", settings: "系统设置" };
       return map[this.page] || "";
     },
-    providerOptions() {
-      return this.modelProviders.map(p => ({
-        label: this.providerLabel(p.key), value: p.key
-      }));
+    publicProviders() {
+      return this.providerCatalog.filter(p => p.group === "public");
+    },
+    privateProviders() {
+      return this.providerCatalog.filter(p => p.group === "private");
+    },
+    isPublicProvider() {
+      const p = this.providerCatalog.find(x => x.key === this.modelForm.provider);
+      return !p || p.group === "public";
     },
     providerBasePlaceholder() {
-      const p = this.modelProviders.find(x => x.key === this.modelForm.provider);
-      const base = p ? p.default_base : "";
-      return base ? "留空使用默认端点：" + base : "OpenAI 兼容端点，留空使用默认";
+      if (this.modelForm.provider === "ollama") return "http://localhost:11434";
+      return "http://你的服务地址:端口/v1";
+    },
+    endpointHint() {
+      if (this.modelForm.provider === "ollama") {
+        return "本地运行的 Ollama 地址，留空使用默认值；Docker 部署建议填 http://host.docker.internal:11434";
+      }
+      return "自建或第三方 OpenAI 兼容服务（如 vLLM、内网网关），需填写完整端点";
+    },
+    currentPreset() {
+      return this.providerCatalog.find(x => x.key === this.modelForm.provider)
+        || { models: [], keyHint: "", keyUrl: "" };
+    },
+    presetModelOptions() {
+      // 预置推荐模型；编辑已有模型时，若其标识不在预置列表中也一并列出，避免选空
+      const list = (this.currentPreset.models || []).slice();
+      const cur = (this.modelForm.model_name || "").trim();
+      if (cur && list.indexOf(cur) === -1) list.push(cur);
+      return list.map(m => ({ label: m, value: m }));
+    },
+    hasBasicInfo() {
+      const n = (this.settingsForm.company_name || "").trim();
+      const d = (this.settingsForm.business_description || "").trim();
+      return !!n && n !== "LeadChat" && !!d && d !== "我们的产品与服务";
+    },
+    onboardingSteps() {
+      return [
+        { key: "model", title: "配置 AI 模型", btn: "去配置", page: "models",
+          desc: "选择公有或私有模型服务并填写凭证，AI 才能开始对话",
+          done: this.models.some(m => m.is_active) },
+        { key: "basic", title: "填写公司信息", btn: "去填写", page: "settings",
+          desc: "填好公司名称与业务描述，AI 话术会自动生成",
+          done: this.hasBasicInfo }
+      ];
+    },
+    onboardingDoneCount() {
+      return this.onboardingSteps.filter(s => s.done).length;
     },
     scenarioOptions() {
       return this.scenarios.map(s => ({ label: s.label, value: s.key }));
@@ -1126,7 +1365,7 @@ const app = Vue.createApp({
       if (!this.embedRecord) return "";
       const base = location.origin + LC_BASE;
       const da = this.embedRecord.id === "default" ? "" : ' data-assistant="' + this.embedRecord.id + '"';
-      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.0"' + da + '><\/script>';
+      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.1"' + da + '><\/script>';
     },
     initEmbed() {
       if (!this.embedRecord) return "";
@@ -1140,7 +1379,7 @@ const app = Vue.createApp({
       lines.push("    context: { page: location.pathname, record_id: \"123\" } // 宿主业务上下文，可省略");
       lines.push("  }]);");
       lines.push("<\/script>");
-      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.0"><\/script>');
+      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.1"><\/script>');
       return lines.join("\n");
     },
     statCards() {
@@ -1161,8 +1400,12 @@ const app = Vue.createApp({
       const v = String(this.settingsForm.widget_icon || "").trim();
       return v.indexOf("http") === 0 || v.indexOf("data:") === 0 || v.charAt(0) === "/";
     },
+    assistantCustomIcon() {
+      const v = String(this.assistantForm.ui.icon || "").trim();
+      return !!v && this.iconPresets.every(p => p.key !== v);
+    },
     embedCode() {
-      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.0"><\/script>';
+      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.1"><\/script>';
     }
   },
   mounted() {
@@ -1199,7 +1442,7 @@ const app = Vue.createApp({
     // ---- 页面切换 ----
     switchPage(p) {
       this.page = p;
-      if (p === "dashboard") this.loadStats();
+      if (p === "dashboard") { this.loadStats(); this.loadModels(); this.loadSettings(); }
       else if (p === "models") this.openModelsPage();
       else if (p === "assistants") this.loadAssistants();
       else if (p === "conversations") this.loadConversations();
@@ -1208,20 +1451,14 @@ const app = Vue.createApp({
       else if (p === "settings") this.loadSettings();
     },
     // ---- 模型管理 ----
+    providerMeta(key) {
+      return this.providerCatalog.find(x => x.key === key) || { label: key, icon: "" };
+    },
     providerLabel(key) {
-      const map = { openai: "OpenAI", deepseek: "DeepSeek", qwen: "通义千问",
-                    glm: "智谱 GLM", ollama: "Ollama", custom: "自定义" };
-      return map[key] || key;
+      return this.providerMeta(key).label;
     },
     async openModelsPage() {
-      await this.loadProviders();
       await this.loadModels();
-    },
-    async loadProviders() {
-      try {
-        const { data } = await api.get("/api/models/providers");
-        this.modelProviders = data.providers || [];
-      } catch (e) { this.modelProviders = []; }
     },
     async loadModels() {
       this.modelLoading = true;
@@ -1232,16 +1469,22 @@ const app = Vue.createApp({
     },
     openCreateModel() {
       this.modelEditing = "";
-      this.modelForm = {
-        name: "", provider: "openai", model_name: "",
-        api_key: "", api_base: "", activate_now: true
-      };
+      this.selectProvider("deepseek");
+      this.modelForm.activate_now = true;
       this.modelModal = true;
+    },
+    selectProvider(key) {
+      // 切换服务：模型换成推荐项；端点与 Key 清空，避免把 A 服务的凭证提交给 B 服务
+      const p = this.providerCatalog.find(x => x.key === key) || { models: [] };
+      this.modelForm.provider = key;
+      this.modelForm.model_name = p.models.length ? p.models[0] : "";
+      this.modelForm.api_base = "";
+      this.modelForm.api_key = "";
     },
     editModel(record) {
       this.modelEditing = record.id;
       this.modelForm = {
-        name: record.name, provider: record.provider,
+        provider: record.provider,
         model_name: record.model_name,
         api_key: "",   // 掩码不回显到输入框，留空即不修改
         api_base: record.api_base,
@@ -1251,21 +1494,28 @@ const app = Vue.createApp({
     },
     async saveModel() {
       const f = this.modelForm;
-      if (!f.name.trim()) { msg().warning("请填写名称"); return; }
-      if (!f.model_name.trim()) { msg().warning("请填写模型标识"); return; }
+      if (!f.model_name.trim()) { msg().warning("请选择要使用的模型"); return; }
+      if (this.isPublicProvider && !this.modelEditing && !f.api_key.trim()) {
+        msg().warning("请填写 API Key"); return;
+      }
+      if (f.provider === "custom" && !f.api_base.trim()) {
+        msg().warning("请填写私有服务的接口端点"); return;
+      }
+      // 显示名称自动生成，用户无需关心；编辑时不回传，避免覆盖已有名称
       this.modelSaving = true;
       try {
         if (this.modelEditing) {
           const payload = {
-            name: f.name.trim(), provider: f.provider,
+            provider: f.provider,
             model_name: f.model_name.trim(),
             api_base: f.api_base.trim()
           };
           if (f.api_key.trim()) payload.api_key = f.api_key.trim();
           await api.put(`/api/models/${this.modelEditing}`, payload);
         } else {
+          const name = this.providerLabel(f.provider) + " " + f.model_name.trim();
           await api.post("/api/models", {
-            name: f.name.trim(), provider: f.provider,
+            name: name, provider: f.provider,
             model_name: f.model_name.trim(),
             api_key: f.api_key.trim(), api_base: f.api_base.trim(),
             is_active: !!f.activate_now
@@ -1446,8 +1696,12 @@ const app = Vue.createApp({
       return {
         id: "", name: "", description: "", scenario: "general",
         system_prompt: "", collect_mode: "ask", collect_data_type: "custom",
+        collect_guide: "",
         fields: [], contextKeys: "",
-        ui: { title: "", welcome_message: "", theme: "", position: "", icon: "" }
+        ui: {
+          title: "", welcome_message: "", popup_message: "", auto_popup_delay: null,
+          theme: "", position: "", icon: ""
+        }
       };
     },
     fieldRow(f) {
@@ -1457,10 +1711,21 @@ const app = Vue.createApp({
         required: !!f.required
       };
     },
+    // 把模板里的 {company_name}/{business_description} 当场替换成系统设置中的真实值，
+    // 助手编辑框里永远展示 AI 实际会收到的话术，不让用户面对看不懂的占位符
+    renderPromptVars(text) {
+      const n = (this.settingsForm.company_name || "").trim() || "我们";
+      const d = (this.settingsForm.business_description || "").trim() || "我们的产品与服务";
+      return String(text || "")
+        .replace(/\{company_name\}/g, n)
+        .replace(/\{business_description\}/g, d);
+    },
     prefillScenario(key) {
       const t = this.scenarios.find(s => s.key === key);
       if (!t) return;
-      this.assistantForm.system_prompt = t.system_prompt || "";
+      // 名称留空时用场景名兜底，做到「选个模板就能建出来」
+      if (!this.assistantForm.name.trim()) this.assistantForm.name = t.label || "";
+      this.assistantForm.system_prompt = this.renderPromptVars(t.system_prompt || "");
       this.assistantForm.collect_mode = (t.collect && t.collect.mode) || "ask";
       this.assistantForm.collect_data_type = (t.collect && t.collect.data_type) || "custom";
       this.assistantForm.fields = (t.fields || []).map(this.fieldRow);
@@ -1472,6 +1737,7 @@ const app = Vue.createApp({
     },
     async openCreateAssistant() {
       await this.loadScenarios();
+      if (!this.settingsLoaded) await this.loadSettings();
       this.assistantEditing = "";
       this.assistantForm = this.blankAssistantForm();
       this.prefillScenario("general");
@@ -1482,6 +1748,7 @@ const app = Vue.createApp({
     },
     async editAssistant(record) {
       try {
+        if (!this.settingsLoaded) await this.loadSettings();
         const { data } = await api.get(`/api/assistants/${record.id}`);
         const c = data.collect_config || {};
         const x = data.context_config || {};
@@ -1492,13 +1759,18 @@ const app = Vue.createApp({
           name: data.name,
           description: data.description || "",
           scenario: data.scenario,
-          system_prompt: data.system_prompt || "",
+          system_prompt: this.renderPromptVars(data.system_prompt || ""),
           collect_mode: c.mode || "ask",
           collect_data_type: c.data_type || "custom",
+          collect_guide: c.guide_message || "",
           fields: (data.business_fields || []).map(this.fieldRow),
           contextKeys: (x.allowed_fields || []).join("，"),
           ui: {
-            title: u.title || "", welcome_message: u.welcome_message || "",
+            title: u.title || "",
+            welcome_message: u.welcome_message || "",
+            popup_message: u.popup_message || "",
+            auto_popup_delay: (u.auto_popup_delay === undefined || u.auto_popup_delay === null || u.auto_popup_delay === "")
+                               ? null : Number(u.auto_popup_delay),
             theme: u.theme || "", position: u.position || "", icon: u.icon || ""
           }
         };
@@ -1512,33 +1784,42 @@ const app = Vue.createApp({
       if (!f.name.trim()) { msg().warning("请填写助手名称"); return; }
       const seen = {};
       const fields = [];
-      for (const x of f.fields) {
-        const key = (x.key || "").trim().toLowerCase();
-        if (!key) continue;
-        if (seen[key]) { msg().warning("字段标识重复：" + key); return; }
+      f.fields.forEach((x, i) => {
+        const label = (x.label || "").trim();
+        const raw = (x.key || "").trim();
+        if (!label && !raw) return;
+        let key = (raw || this.autoFieldKey(label, i)).toLowerCase();
+        while (seen[key]) key = key + "_" + (i + 1);
         seen[key] = 1;
         fields.push({
           key: key,
-          label: (x.label || "").trim() || key,
+          label: label || key,
           type: x.type || "string",
           options: x.type === "enum"
-            ? x.optionsText.split(/[，,、\n]/).map(s => s.trim()).filter(Boolean)
+            ? String(x.optionsText || "").split(/[，,、\n]/).map(s => s.trim()).filter(Boolean)
             : [],
           required: !!x.required
         });
-      }
+      });
       const contextKeys = f.contextKeys.split(/[，,、\s\n]+/).map(s => s.trim()).filter(Boolean);
+      // ui_config 仅写入非空项，未配置的外观/接待项继续继承系统默认
       const ui = {};
-      ["title", "welcome_message", "theme", "position", "icon"].forEach(k => {
+      ["title", "welcome_message", "popup_message", "theme", "icon", "position"].forEach(k => {
         const v = (f.ui[k] || "").trim();
         if (v) ui[k] = v;
       });
+      // 自动弹出：填大于 0 的秒数才写入；留空或 0＝不弹出（同时保持继承链干净）
+      const delay = Number(f.ui.auto_popup_delay);
+      if (delay > 0) ui.auto_popup_delay = delay;
+      const collectConfig = { mode: f.collect_mode, data_type: f.collect_data_type };
+      const guide = (f.collect_guide || "").trim();
+      if (guide) collectConfig.guide_message = guide;
       const payload = {
         name: f.name.trim(),
         description: f.description || "",
         scenario: f.scenario,
         system_prompt: f.system_prompt || "",
-        collect_config: { mode: f.collect_mode, data_type: f.collect_data_type },
+        collect_config: collectConfig,
         context_config: { allowed_fields: contextKeys, max_keys: 20 },
         ui_config: ui,
         business_fields: fields
@@ -1656,19 +1937,23 @@ const app = Vue.createApp({
       if (!keys.length) return "—";
       return keys.map(k => (labelMap[k] || k) + ": " + payload[k]).join("，");
     },
+    // ---- 字段标识自动生成（用户无需理解 key 概念） ----
+    autoFieldKey(label, index) {
+      const s = String(label || "").trim().toLowerCase();
+      const ascii = s.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      if (ascii && /^[a-z0-9]/.test(ascii)) return ascii.slice(0, 32);
+      return "field_" + (index + 1);
+    },
     // ---- 设置 ----
     async loadSettings() {
       try {
         const { data } = await api.get("/api/config");
         const c = data.config;
         this.settingsForm.system_prompt = c.system_prompt;
-        this.settingsForm.welcome_message = c.welcome_message;
-        this.settingsForm.popup_message = c.popup_message || "您好，请问有什么可以帮您吗？";
-        this.settingsForm.auto_popup_delay = c.auto_popup_delay ?? 3;
-        this.settingsForm.collect_guide_message = c.collect_guide_message;
+        // 与默认话术一致 → 视为「未自定义」，界面只展示自动生成的预览
+        this.settingsCustomPrompt = (c.system_prompt || "").trim() !== this.defaultSystemPrompt.trim();
         this.settingsForm.company_name = c.company_name;
         this.settingsForm.business_description = c.business_description;
-        this.settingsForm.formFields = JSON.parse(JSON.stringify(c.business_fields || []));
         this.settingsForm.widget_theme = c.widget_theme;
         this.settingsForm.widget_position = c.widget_position;
         this.settingsForm.widget_icon = c.widget_icon || "chat";
@@ -1677,19 +1962,11 @@ const app = Vue.createApp({
     },
     async saveSettings() {
       const f = this.settingsForm;
-      const fields = f.formFields.filter(x => x.key && x.key.trim()).map(x => ({
-        key: x.key.trim(), label: x.label.trim() || x.key.trim(),
-        type: x.type || "string", required: !!x.required
-      }));
       const items = {
-        system_prompt: f.system_prompt,
-        welcome_message: f.welcome_message,
-        popup_message: f.popup_message,
-        auto_popup_delay: Number(f.auto_popup_delay) || 0,
-        collect_guide_message: f.collect_guide_message,
+        // 未开启自定义话术时，始终写回含变量的默认模板，AI 会按公司名/业务描述自动生成
+        system_prompt: this.settingsCustomPrompt ? f.system_prompt : this.defaultSystemPrompt,
         company_name: f.company_name,
         business_description: f.business_description,
-        business_fields: fields,
         widget_theme: f.widget_theme,
         widget_position: f.widget_position,
         widget_icon: f.widget_icon
@@ -1718,6 +1995,19 @@ const app = Vue.createApp({
       reader.onload = function () {
         self.settingsForm.widget_icon = String(reader.result);
         msg().success("图标已上传，点击“保存全部设置”后生效");
+      };
+      reader.readAsDataURL(file);
+    },
+    onAssistantIconFile(e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (!/^image\//.test(file.type)) { msg().error("请选择图片文件"); return; }
+      if (file.size > 200 * 1024) { msg().error("图片不能超过 200KB"); return; }
+      const reader = new FileReader();
+      const self = this;
+      reader.onload = function () {
+        self.assistantForm.ui.icon = String(reader.result);
       };
       reader.readAsDataURL(file);
     },

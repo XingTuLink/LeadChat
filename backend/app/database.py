@@ -29,6 +29,8 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
     from app.services.assistant_store import ensure_default_assistant
+    from app.services.config_store import migrate_legacy_config
 
     async with AsyncSessionLocal() as session:
+        await migrate_legacy_config(session)
         await ensure_default_assistant(session)

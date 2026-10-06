@@ -1,13 +1,14 @@
 """LLM 调用封装：通过 LiteLLM 统一对接 OpenAI / DeepSeek / 通义千问 / 智谱 / Ollama 等
 
 对话模型配置来自后台「模型管理」（数据库，支持多模型在线切换），
-调用方必须显式传入激活模型的配置；Embedding 仍由环境变量配置。
+调用方必须显式传入激活模型的配置。
+Embedding 使用内置本地模型（ChromaDB ONNX），无需任何配置。
 """
 import logging
 
 import litellm
 
-from app.config import settings
+from app.services.model_store import PROVIDER_DEFAULT_BASES
 
 logger = logging.getLogger("leadchat.llm")
 
@@ -15,13 +16,6 @@ try:
     litellm.suppress_debug_info = True
 except Exception:  # noqa: S110
     pass
-
-# 各厂商默认的 OpenAI 兼容端点
-PROVIDER_DEFAULT_BASES = {
-    "qwen": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    "glm": "https://open.bigmodel.cn/api/paas/v4",
-    "ollama": "http://localhost:11434",
-}
 
 
 class ModelNotConfiguredError(RuntimeError):
@@ -38,23 +32,23 @@ def _chat_target(
     api_base = str(model_cfg.get("api_base") or "").strip() or None
 
     if not model:
-        raise ValueError("模型标识不能为空")
+        raise ValueError("模型不能为空")
 
     if provider in ("", "openai"):
+        # OpenAI 官方：LiteLLM 内置默认端点，api_base 留空即可
         litellm_model = model if model.startswith("openai/") else f"openai/{model}"
     elif provider == "deepseek":
+        # DeepSeek 官方：LiteLLM 原生支持
         litellm_model = f"deepseek/{model}"
-    elif provider == "qwen":
-        litellm_model = f"openai/{model}"
-        api_base = api_base or PROVIDER_DEFAULT_BASES["qwen"]
-    elif provider == "glm":
-        litellm_model = f"openai/{model}"
-        api_base = api_base or PROVIDER_DEFAULT_BASES["glm"]
-    elif provider == "ollama":
-        litellm_model = f"ollama/{model}"
-        api_base = api_base or PROVIDER_DEFAULT_BASES["ollama"]
+    elif provider in ("qwen", "glm", "ollama"):
+        # 走各厂商 / 本地服务的 OpenAI 兼容端点
+        litellm_model = f"openai/{model}" if provider != "ollama" else f"ollama/{model}"
+        api_base = api_base or PROVIDER_DEFAULT_BASES[provider]
     elif provider in ("custom", "openai_compatible", "compatible"):
-        litellm_model = f"openai/{model}"  # 需自行配置 api_base
+        # 自建 / 第三方 OpenAI 兼容服务（vLLM、内网网关等），必须提供端点
+        if not api_base:
+            raise ValueError("OpenAI 兼容服务必须填写接口端点")
+        litellm_model = f"openai/{model}"
     else:
         litellm_model = f"openai/{model}"
 
@@ -122,39 +116,3 @@ async def chat_completion_stream(
                 await close()
             except Exception:  # noqa: BLE001
                 pass
-
-
-# ---------------------------------------------------------------- Embedding
-
-def _embedding_target(
-    model: str,
-) -> tuple[str, str | None, str | None]:
-    """解析远程 embedding 模型：含厂商前缀（openai/xxx）直接使用，否则按 OpenAI 处理"""
-    m = model.strip()
-    litellm_model = m if "/" in m else f"openai/{m}"
-    return (
-        litellm_model,
-        settings.embedding_api_key or None,
-        settings.embedding_api_base or None,
-    )
-
-
-async def get_embeddings(texts: list[str]) -> list[list[float]]:
-    """批量获取文本向量（需配置 EMBEDDING_MODEL）"""
-    if not settings.embedding_model:
-        raise RuntimeError("EMBEDDING_MODEL 未配置")
-    model, api_key, api_base = _embedding_target(settings.embedding_model)
-    response = await litellm.aembedding(
-        model=model,
-        input=texts,
-        api_key=api_key,
-        api_base=api_base,
-        timeout=60,
-    )
-    data = sorted(response.data, key=lambda x: x.get("index", 0))
-    return [d["embedding"] for d in data]
-
-
-async def get_embedding(text: str) -> list[float]:
-    """获取单条文本向量"""
-    return (await get_embeddings([text]))[0]

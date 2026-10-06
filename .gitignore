@@ -22,19 +22,10 @@ release/
 Thumbs.db
 .idea/
 .vscode/
+.trae/
 
 # Node
 node_modules/
 
-# 内部协作文档（商业规划、开发约定、收敛清单、内部简报，不随开源仓库发布）
-STATUS.md
-整改意见*.md
-v*_整改变更清单.md
-LeadChat_业务与版本规划.md
-LeadChat_开发指南_AI专用.md
-LeadChat开源前收敛清单_*.md
-使用说明书.md
-发布推送清单.md
-readme改造建议.md
-docs/PRODUCT_ABSTRACTION_AUDIT.md
-docs/LEAD_REFERENCE_AUDIT.md
+# 内部协作文档统一存放目录（商业规划、开发约定、整改/收敛清单、状态简报等，不随开源仓库发布）
+docs/internal/

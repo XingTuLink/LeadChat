@@ -3,7 +3,6 @@ import asyncio
 import threading
 
 import chromadb
-from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 from chromadb.config import Settings as ChromaSettings
 
 from app.config import settings
@@ -13,30 +12,6 @@ COLLECTION_NAME = "knowledge_base"
 _client = None
 _collection = None
 _init_lock = threading.Lock()
-
-
-class _LiteLLMEmbedding(EmbeddingFunction):
-    """自定义 Embedding 函数：走 LiteLLM（需配置 EMBEDDING_MODEL）"""
-
-    def __call__(self, input: Documents) -> Embeddings:  # noqa: A002
-        import litellm
-        from app.services import llm
-
-        model, api_key, api_base = llm._resolve(settings.embedding_model)
-        response = litellm.embedding(
-            model=model, input=list(input), api_key=api_key, api_base=api_base, timeout=60
-        )
-        data = sorted(response.data, key=lambda x: x.get("index", 0))
-        return [d["embedding"] for d in data]
-
-    def name(self) -> str:
-        return "litellm"
-
-    def get_config(self) -> dict:
-        return {}
-
-    def build_from_config(self, config: dict) -> None:
-        pass
 
 
 def _get_collection():
@@ -49,10 +24,9 @@ def _get_collection():
                 path=settings.chroma_dir,
                 settings=ChromaSettings(anonymized_telemetry=False, allow_reset=False),
             )
-            ef = _LiteLLMEmbedding() if settings.embedding_model else None
+            # 不传 embedding_function：使用 ChromaDB 内置本地 ONNX 模型（镜像内置，离线零配置）
             _collection = _client.get_or_create_collection(
                 name=COLLECTION_NAME,
-                embedding_function=ef,
                 metadata={"hnsw:space": "cosine"},
             )
     return _collection

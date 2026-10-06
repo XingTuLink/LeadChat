@@ -352,7 +352,7 @@ html, body { margin: 0; padding: 0; }
       <header class="main-header">
         <span class="crumb">{{ pageTitle }}</span>
         <div class="header-right">
-          <span class="ver-tag">v0.6.1</span>
+          <span class="ver-tag">v0.6.2</span>
           <a-button type="link" size="small" @click="logout">退出登录</a-button>
         </div>
       </header>
@@ -1365,7 +1365,7 @@ const app = Vue.createApp({
       if (!this.embedRecord) return "";
       const base = location.origin + LC_BASE;
       const da = this.embedRecord.id === "default" ? "" : ' data-assistant="' + this.embedRecord.id + '"';
-      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.1"' + da + '><\/script>';
+      return '<script src="' + base + '/widget/leadchat.min.js?v=0.6.2"' + da + '><\/script>';
     },
     initEmbed() {
       if (!this.embedRecord) return "";
@@ -1379,7 +1379,7 @@ const app = Vue.createApp({
       lines.push("    context: { page: location.pathname, record_id: \"123\" } // 宿主业务上下文，可省略");
       lines.push("  }]);");
       lines.push("<\/script>");
-      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.1"><\/script>');
+      lines.push('<script src="' + base + '/widget/leadchat.min.js?v=0.6.2"><\/script>');
       return lines.join("\n");
     },
     statCards() {
@@ -1405,7 +1405,7 @@ const app = Vue.createApp({
       return !!v && this.iconPresets.every(p => p.key !== v);
     },
     embedCode() {
-      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.1"><\/script>';
+      return '<script src="' + location.origin + LC_BASE + '/widget/leadchat.min.js?v=0.6.2"><\/script>';
     }
   },
   mounted() {

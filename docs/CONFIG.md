@@ -61,9 +61,10 @@
 | `data-assistant` | 否 | 助手 ID（v0.4），缺省使用默认助手 |
 | `data-theme` | 否 | 主题色，覆盖后台配置 |
 | `data-position` | 否 | `right` / `left`，覆盖后台配置 |
-| `data-icon` | 否 | 按钮图标：`chat` / `message` / `headset` / `sparkle` / `smile` |
+| `data-icon` | 否 | 按钮图标：`chat` / `message` / `headset` / `spark` / `smile` |
 | `data-welcome` | 否 | 欢迎语，覆盖后台配置 |
 | `data-title` | 否 | 窗口标题（公司名），覆盖后台配置 |
+| `data-mode` | 否 | 窗口模式（v0.6.2）：`window` 小窗（默认）/ `fullscreen` 全屏 |
 
 优先级：`LeadChat.init` 参数 > `data-*` 属性（二者均为页面端覆盖，仅传入项生效）> 服务端助手 `ui_config` > 后台「系统设置」> 内置默认值。
 
@@ -74,19 +75,26 @@
   window.LeadChat = window.LeadChat || [];
   window.LeadChat.push(["init", {
     assistant: "support",
+    mode: "fullscreen",
     context: { page: location.pathname, order_id: "O-009" }
   }]);
 </script>
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.1"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2"></script>
 ```
 
 运行期可随时调用 `LeadChat.setContext({...})` 更新（如 SPA 路由切换），详见 README「嵌入任意 Web 系统」。
+
+挂件交互（v0.6.2）：
+
+- **小窗 / 全屏双模式**：聊天窗标题栏右侧全屏按钮可切换；`init({ mode: "fullscreen" })`、`data-mode="fullscreen"` 可指定初始模式；`LeadChat.open({ fullscreen: true })` 直接全屏打开；也可用 `LeadChat.setMode(mode)` / `LeadChat.toggleFullscreen()` 运行时控制。访客的模式选择保存在本机。
+- **可拖拽**：浮动按钮和小窗标题栏都可拖动（鼠标 / 触摸，Pointer Events），窗口与气泡跟随、自动限制在视口内；位置保存在 `localStorage`，下次打开保持。全屏下不拖拽；清除站点数据即复位。
+- 按 `Esc` 收起聊天窗。
 
 挂件其他行为：
 
 - 对话记录保存在浏览器 `localStorage`，刷新页面不丢失
 - 欢迎气泡每会话弹一次，关闭后本会话不再出现
-- 移动端（<480px）聊天窗口自动全屏
+- 移动端（≤480px）小窗自动以全屏尺寸展示
 
 ## 四、后台配置项（系统设置页）
 
@@ -192,10 +200,10 @@
 
 ```html
 <!-- 默认助手（不带标识） -->
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.1"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2"></script>
 
 <!-- 售后助手（带 data-assistant 标识，任意网站嵌入都使用该助手及其专属外观/接待） -->
-<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.1" data-assistant="support"></script>
+<script src="https://chat.example.com/widget/leadchat.min.js?v=0.6.2" data-assistant="support"></script>
 ```
 
 因此：不同网站可以嵌不同助手（官网用销售助手、售后系统用客服助手、内网用内部 Copilot），也可以多个网站共用同一个助手；标识无效或助手已停用时自动回退默认助手。

@@ -31,8 +31,12 @@
   justify-content: center;
   transition: transform 0.15s ease, background 0.15s ease;
   z-index: 2;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .lc-fab:hover { transform: scale(1.06); background: var(--lc-primary-dark); }
+.lc-root--dragging .lc-fab { transition: none; transform: none; }
 .lc-fab svg { width: 26px; height: 26px; fill: #fff; }
 .lc-fab img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; display: block; }
 .lc-root--left .lc-fab { right: auto; left: 20px; }
@@ -92,6 +96,22 @@
 .lc-root--left .lc-window { right: auto; left: 20px; }
 .lc-window--hidden { display: none; }
 
+/* 全屏模式：窗口铺满视口，隐藏浮动按钮与气泡，位置内联样式让位 */
+.lc-root--fullscreen .lc-window {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border: none;
+  border-radius: 0;
+  animation: none;
+}
+.lc-root--fullscreen.lc-root--open .lc-fab,
+.lc-root--fullscreen .lc-bubble { display: none; }
+
 .lc-header {
   padding: 14px 16px;
   background: var(--lc-primary);
@@ -100,7 +120,13 @@
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
+.lc-root--dragging .lc-header { cursor: grabbing; }
+.lc-root--fullscreen .lc-header { cursor: default; touch-action: auto; }
 .lc-header-title { font-size: 15px; font-weight: 600; }
 .lc-header-status {
   font-size: 12px;
@@ -117,6 +143,8 @@
   background: #34d399;
   display: inline-block;
 }
+.lc-header-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.lc-header-full,
 .lc-header-close {
   border: none;
   background: transparent;
@@ -124,10 +152,16 @@
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 4px 6px;
   opacity: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.lc-header-close:hover { opacity: 1; }
+.lc-header-full { border-radius: 6px; }
+.lc-header-full svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.lc-header-full:hover,
+.lc-header-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); }
 
 /* ---------- 消息区域 ---------- */
 .lc-messages {

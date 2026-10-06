@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"/>
   <img src="https://img.shields.io/badge/FastAPI-0.110+-green.svg" alt="FastAPI"/>
   <img src="https://img.shields.io/badge/docker-ready-green.svg" alt="Docker"/>
-  <img src="https://img.shields.io/badge/version-0.6.1-orange.svg" alt="Version"/>
+  <img src="https://img.shields.io/badge/version-0.6.2-orange.svg" alt="Version"/>
 </p>
 
 **一行代码嵌入任何 Web 系统，用对话连接用户与业务。**
@@ -59,8 +59,10 @@ LeadChat 是一个开源的 Web AI 助手（Web AI Interaction Layer）：官网
 
 ### 挂件
 
-- **一行代码嵌入** — 单文件原生 JS（约 37KB），无运行时依赖；内置安全 Markdown 渲染器
-- **Embed API** — `LeadChat.init({ assistant, context, theme, ... })` 程序化接入，支持脚本加载前队列调用；旧 `data-*` 属性写法继续兼容
+- **一行代码嵌入** — 单文件原生 JS（约 45KB），无运行时依赖；内置安全 Markdown 渲染器
+- **Embed API** — `LeadChat.init({ assistant, context, theme, mode, ... })` 程序化接入，支持脚本加载前队列调用；旧 `data-*` 属性写法继续兼容
+- **小窗 / 全屏双模式** — 标题栏一键切换全屏，支持 `data-mode` 与 API 指定；访客选择本机记忆
+- **可拖拽** — 浮动按钮和小窗标题栏均可自由拖动（鼠标/触摸），自动贴边不出屏，位置本机记忆
 - **可配置外观** — 主题色、按钮图标（5 个预设加自定义上传）、位置、标题、欢迎语；每个助手可独立覆盖
 - **悬浮色自动计算** — 悬浮色由主题色经 HSL 算法生成（亮色加深、深色提亮）
 - **Shadow DOM 隔离** — 与宿主页面样式互不污染
@@ -189,10 +191,10 @@ docker compose up -d --build
 
 ```html
 <!-- 默认助手：不带助手标识 -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
 
 <!-- 指定助手：加 data-assistant 标识即可；后台「多助手」列表每个助手都有可复制的嵌入代码 -->
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1" data-assistant="support"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2" data-assistant="support"></script>
 ```
 
 每个助手拥有独立的话术、欢迎语、自动弹出、外观与采集规则（未自定义项继承系统设置）。因此**一个 LeadChat 实例可同时服务多个网站/系统**：不同站点嵌不同助手，或多个站点共用同一助手；标识无效或助手停用时自动回退默认助手。
@@ -212,7 +214,7 @@ docker compose up -d --build
     }
   }]);
 </script>
-<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.1"></script>
+<script src="http://your-server:11999/widget/leadchat.min.js?v=0.6.2"></script>
 <script>
   // 运行时也可更新上下文（如 SPA 路由切换后）
   LeadChat.setContext({ page: "/orders/O-002", order_id: "O-002" });
@@ -229,9 +231,17 @@ docker compose up -d --build
 | `LeadChat.init(options)` | 初始化；脚本加载前用队列调用，加载后直接调用 |
 | `LeadChat.setContext(ctx)` | 更新业务上下文（每轮消息上送，服务端按白名单过滤） |
 | `LeadChat.getContext()` | 读取当前上下文 |
-| `LeadChat.open()` / `LeadChat.close()` | 打开 / 收起聊天窗 |
+| `LeadChat.open(options?)` | 打开聊天窗；可传 `{ mode: "fullscreen" }` 或 `{ fullscreen: true }` 以全屏打开 |
+| `LeadChat.close()` | 收起聊天窗 |
+| `LeadChat.setMode(mode)` | 切换窗口模式：`"window"` 小窗 / `"fullscreen"` 全屏 |
+| `LeadChat.toggleFullscreen()` | 在小窗 / 全屏之间切换 |
 
-`init` 参数：`assistant`（ID 字符串或 `{ id }`）、`context`、`api`、`theme`、`position`、`title`、`welcome`、`icon`。
+`init` 参数：`assistant`（ID 字符串或 `{ id }`）、`context`、`api`、`theme`、`position`、`title`、`welcome`、`icon`、`mode`（`"window"` / `"fullscreen"`，也可写 `fullscreen: true`）。
+
+**窗口模式与拖拽（v0.6.2）**
+
+- **小窗 / 全屏**：聊天窗标题栏右侧新增全屏按钮，访客可一键把窗口铺满整个浏览器；选择会记在本机，下次打开保持。宿主也可用 `data-mode="fullscreen"` 或 `init({ mode: "fullscreen" })` 指定初始模式。移动端（≤480px）小窗本身即全屏展示。按 `Esc` 可收起窗口。
+- **拖拽**：浮动按钮和小窗标题栏都可以拖动，窗口、气泡自动跟随并不超出屏幕边缘；松手后位置记在本机，下次打开仍在原处（清浏览器缓存即复位）。全屏模式下不可拖拽。
 
 **旧版 data-* 属性（继续支持）**
 
@@ -246,6 +256,7 @@ docker compose up -d --build
 | `data-icon` | 按钮图标：`chat` / `message` / `headset` / `spark` / `smile` | 后台配置 |
 | `data-title` | 窗口标题 | 公司名 |
 | `data-welcome` | 欢迎语 | 后台配置 |
+| `data-mode` | 窗口模式：`window` 小窗 / `fullscreen` 全屏 | `window` |
 
 > 挂件 URL 上的 `?v=x.y.z` 用于缓存治理：服务端升级后，客户网站自动拿到新版挂件。
 
@@ -392,6 +403,7 @@ LeadChat 专注于 Web AI Interaction Layer，目标不是做 AI 中台或 Agent
 - [x] v0.5.x Assistant-first 重构、SSE 流式对话、Markdown 排版等开源前打磨
 - [x] v0.6.0 多模型在线切换、厂商化模型管理、内置本地 Embedding
 - [x] v0.6.1 正在提高 LeadChat 的易用性：零配置开箱即用、模型服务按公有/私有分组并配真实品牌图标、后台配置傻瓜化
+- [x] v0.6.2 挂件交互体验：小窗/全屏双模式、浮动按钮与标题栏可拖拽（位置记忆、自动不出屏）、Esc 收起、Embed API 模式控制
 
 ### v0.6 — Interaction Experience
 
@@ -400,7 +412,7 @@ LeadChat 专注于 Web AI Interaction Layer，目标不是做 AI 中台或 Agent
 - [ ] Webhook / Event Webhook
 - [ ] 助手独立模型与知识库配置
 - [ ] Embed API 增强
-- [ ] 挂件交互体验优化
+- [x] 挂件交互体验优化（v0.6.2：小窗/全屏双模式、可拖拽）
 - [ ] Conversation 事件完善
 
 ### v0.7 — Retrieval & Context

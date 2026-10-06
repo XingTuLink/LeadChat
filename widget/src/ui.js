@@ -9,6 +9,8 @@ function lcEscapeHtml(str) {
 
 var LC_SVG_CHAT = '<svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.8 1.6 5.3 4 6.9V22l3.7-2c.7.1 1.5.2 2.3.2 5.5 0 10-3.9 10-8.7S17.5 3 12 3zm0 14.4c-.7 0-1.5-.1-2.1-.2l-2.9 1.6v-2.9C4.6 14.8 3.6 13.3 3.6 11.7 3.6 7.8 7.4 4.6 12 4.6s8.4 3.2 8.4 7.1-3.8 5.7-8.4 5.7z"/></svg>';
 var LC_SVG_SEND = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+var LC_SVG_EXPAND = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+var LC_SVG_COMPRESS = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
 
 // 浮动按钮预设图标（key 与管理后台"按钮图标"选择器一致）
 var LC_ICONS = {
@@ -106,7 +108,10 @@ function initWidget(opts, remote) {
     '  <div class="lc-header">' +
     '    <div><div class="lc-header-title">' + lcEscapeHtml(title) + "</div>" +
     '    <div class="lc-header-status"><span class="lc-dot"></span>在线</div></div>' +
-    '    <button class="lc-header-close" aria-label="关闭聊天">×</button>' +
+    '    <div class="lc-header-actions">' +
+    '      <button class="lc-header-full" aria-label="全屏显示" title="全屏显示">' + LC_SVG_EXPAND + "</button>" +
+    '      <button class="lc-header-close" aria-label="关闭聊天">×</button>' +
+    '    </div>' +
     "  </div>" +
     '  <div class="lc-messages"></div>' +
     '  <div class="lc-footer">' +
@@ -128,6 +133,8 @@ function initWidget(opts, remote) {
     fab: root.querySelector(".lc-fab"),
     bubble: root.querySelector(".lc-bubble"),
     window: root.querySelector(".lc-window"),
+    header: root.querySelector(".lc-header"),
+    fullBtn: root.querySelector(".lc-header-full"),
     headerClose: root.querySelector(".lc-header-close"),
     messages: root.querySelector(".lc-messages"),
     input: root.querySelector(".lc-input"),
@@ -227,37 +234,220 @@ function initWidget(opts, remote) {
   }
 
   function openWindow() {
+    root.classList.add("lc-root--open");
     ui.window.classList.remove("lc-window--hidden");
     hideBubble();
     ui.input.focus();
     if (typeof onWindowOpened === "function") onWindowOpened();
   }
-  function closeWindow() { ui.window.classList.add("lc-window--hidden"); }
+  function closeWindow() {
+    ui.window.classList.add("lc-window--hidden");
+    root.classList.remove("lc-root--open");
+  }
   function toggleWindow() {
     if (ui.window.classList.contains("lc-window--hidden")) openWindow();
     else closeWindow();
   }
 
-  ui.fab.addEventListener("click", toggleWindow);
+  // ---------- 窗口模式：小窗 / 全屏 ----------
+  var LC_MODE_KEY = "leadchat_window_mode";
+  var bootMode = (window.__lc_opts && window.__lc_opts.mode) || "";
+  var savedMode = "";
+  try { savedMode = localStorage.getItem(LC_MODE_KEY) || ""; } catch (e) { /* 隐私模式 */ }
+  var windowMode = bootMode === "fullscreen" || bootMode === "window"
+    ? bootMode
+    : (savedMode === "fullscreen" ? "fullscreen" : "window");
+  function setWindowMode(mode) {
+    windowMode = mode === "fullscreen" ? "fullscreen" : "window";
+    root.classList.toggle("lc-root--fullscreen", windowMode === "fullscreen");
+    if (windowMode === "fullscreen") {
+      // 全屏铺满视口：移除拖拽产生的内联定位，避免与全屏 CSS 打架
+      ["left", "right", "top", "bottom", "maxHeight"].forEach(function (k) {
+        ui.window.style[k] = "";
+      });
+    } else if (positioned) {
+      // 退出全屏：按 FAB 当前位置重新锚定小窗
+      var r = ui.fab.getBoundingClientRect();
+      placeFab(r.left, r.top);
+    }
+    ui.fullBtn.innerHTML = windowMode === "fullscreen" ? LC_SVG_COMPRESS : LC_SVG_EXPAND;
+    var label = windowMode === "fullscreen" ? "退出全屏" : "全屏显示";
+    ui.fullBtn.setAttribute("aria-label", label);
+    ui.fullBtn.title = label;
+    try { localStorage.setItem(LC_MODE_KEY, windowMode); } catch (e) { /* 忽略 */ }
+  }
+  function toggleFullscreen() {
+    setWindowMode(windowMode === "fullscreen" ? "window" : "fullscreen");
+  }
+  setWindowMode(windowMode);
+
+  // ---------- 拖拽：浮动按钮与小窗标题栏均可拖动整个挂件 ----------
+  var LC_POS_KEY = "leadchat_fab_pos";
+  var FAB_SIZE = 56, EDGE = 8;
+  var fabDragMoved = false;
+  var positioned = false;
+
+  function placeFab(left, top) {
+    var vw = document.documentElement.clientWidth;
+    var vh = document.documentElement.clientHeight;
+    left = Math.max(EDGE, Math.min(left, vw - FAB_SIZE - EDGE));
+    top = Math.max(EDGE, Math.min(top, vh - FAB_SIZE - EDGE));
+
+    ui.fab.style.left = left + "px";
+    ui.fab.style.top = top + "px";
+    ui.fab.style.right = "auto";
+    ui.fab.style.bottom = "auto";
+
+    var side = left + FAB_SIZE / 2 < vw / 2 ? "left" : "right";
+    root.classList.toggle("lc-root--left", side === "left");
+
+    var winGap = 16, bubGap = 12;
+    ui.window.style.top = "auto";
+    ui.bubble.style.top = "auto";
+    ui.window.style.bottom = (vh - top - FAB_SIZE + winGap) + "px";
+    ui.bubble.style.bottom = (vh - top - FAB_SIZE + bubGap) + "px";
+
+    var winW = ui.window.offsetWidth || 360;
+    var bubW = ui.bubble.offsetWidth || 240;
+    if (side === "right") {
+      var right = vw - left - FAB_SIZE;
+      ui.window.style.right = right + "px";
+      ui.window.style.left = "auto";
+      ui.bubble.style.right = right + "px";
+      ui.bubble.style.left = "auto";
+    } else {
+      ui.window.style.left = Math.max(EDGE, Math.min(left, vw - winW - EDGE)) + "px";
+      ui.window.style.right = "auto";
+      ui.bubble.style.left = Math.max(EDGE, Math.min(left, vw - bubW - EDGE)) + "px";
+      ui.bubble.style.right = "auto";
+    }
+
+    // 纵向约束：FAB 上方空间不足时压缩小窗高度；连 240px 都没有则让窗口贴视口顶部展开
+    var availAbove = top - 16 - EDGE;
+    if (availAbove >= 240) {
+      ui.window.style.top = "auto";
+      ui.window.style.maxHeight = availAbove + "px";
+    } else {
+      ui.window.style.top = EDGE + "px";
+      ui.window.style.bottom = "auto";
+      ui.window.style.maxHeight = (vh - EDGE * 2) + "px";
+    }
+
+    // 二次修正（仅开窗状态）：标题栏拖动可能把小窗带出视口，按窗口实际边框反向修正一次
+    if (!placeFab._fixing && !ui.window.classList.contains("lc-window--hidden")) {
+      var wr = ui.window.getBoundingClientRect();
+      var shiftX = 0, shiftY = 0;
+      if (wr.left < EDGE) shiftX = EDGE - wr.left;
+      else if (wr.right > vw - EDGE) shiftX = vw - EDGE - wr.right;
+      if (wr.top < EDGE) shiftY = EDGE - wr.top;
+      else if (wr.bottom > vh - EDGE) shiftY = vh - EDGE - wr.bottom;
+      if (shiftX || shiftY) {
+        placeFab._fixing = true;
+        placeFab(left + shiftX, top + shiftY);
+        placeFab._fixing = false;
+        return;
+      }
+    }
+    positioned = true;
+  }
+
+  function saveFabPos() {
+    var r = ui.fab.getBoundingClientRect();
+    try {
+      localStorage.setItem(LC_POS_KEY, JSON.stringify({
+        left: Math.round(r.left), top: Math.round(r.top)
+      }));
+    } catch (e) { /* 忽略 */ }
+  }
+
+  function bindDrag(handle, onMoveState) {
+    var dragging = false, moved = false;
+    var startX = 0, startY = 0, origLeft = 0, origTop = 0;
+    handle.addEventListener("pointerdown", function (e) {
+      if (e.isPrimary === false || e.button !== 0) return;
+      // 标题栏上的关闭/全屏按钮不触发拖拽；FAB 自身就是按钮，需放行
+      var clickedBtn = e.target.closest ? e.target.closest("button") : null;
+      if (clickedBtn && clickedBtn !== handle) return;
+      if (root.classList.contains("lc-root--fullscreen")) return;
+      var r = ui.fab.getBoundingClientRect();
+      dragging = true;
+      moved = false;
+      onMoveState(false);  // 每次按下先清除上次的"已拖拽"标记，避免残留吞掉本次点击
+      startX = e.clientX; startY = e.clientY;
+      origLeft = r.left; origTop = r.top;
+      try { handle.setPointerCapture(e.pointerId); } catch (err) { /* 旧浏览器 */ }
+      root.classList.add("lc-root--dragging");
+    });
+    handle.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      moved = true;
+      onMoveState(true);
+      placeFab(origLeft + dx, origTop + dy);
+    });
+    function finish(e) {
+      if (!dragging) return;
+      dragging = false;
+      root.classList.remove("lc-root--dragging");
+      try { handle.releasePointerCapture(e.pointerId); } catch (err) { /* 忽略 */ }
+      if (moved) saveFabPos();
+    }
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", finish);
+  }
+
+  ui.fab.addEventListener("click", function () {
+    // 拖拽松手也会触发 click，位移超过阈值时吞掉这次点击
+    if (fabDragMoved) { fabDragMoved = false; return; }
+    toggleWindow();
+  });
+  bindDrag(ui.fab, function (m) { fabDragMoved = m; });
+  bindDrag(ui.header, function () { /* 标题栏拖动无需抑制点击 */ });
   ui.headerClose.addEventListener("click", closeWindow);
+  ui.fullBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleFullscreen();
+  });
   ui.bubble.addEventListener("click", openWindow);
   ui.bubbleClose.addEventListener("click", function (e) {
     e.stopPropagation();
     hideBubble();
   });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !ui.window.classList.contains("lc-window--hidden")) closeWindow();
+  });
+  window.addEventListener("resize", function () {
+    if (positioned) {
+      var r = ui.fab.getBoundingClientRect();
+      placeFab(r.left, r.top);
+    }
+  });
+
+  // 恢复访客上次放置的位置
+  (function restoreFabPos() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(LC_POS_KEY) || "null"); } catch (e) { /* 忽略 */ }
+    if (saved && typeof saved.left === "number" && typeof saved.top === "number") {
+      placeFab(saved.left, saved.top);
+    }
+  })();
 
   // 到达配置秒数后自动弹出欢迎气泡（每次会话一次；delay<=0 关闭）
   if (popupDelay > 0) {
     setTimeout(showBubble, Math.round(popupDelay * 1000));
   }
 
-  // 暴露给 chat.js
+  // 暴露给 chat.js / embed.js
   window.__lc_ui = {
     appendMessage: appendMessage,
     appendAIRow: appendAIRow,
     showTyping: showTyping,
     hideTyping: hideTyping,
     openWindow: openWindow,
+    closeWindow: closeWindow,
+    setMode: setWindowMode,
+    toggleFullscreen: toggleFullscreen,
     welcome: welcome,
     ui: ui
   };

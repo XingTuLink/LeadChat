@@ -29,7 +29,7 @@ function readVersion() {
   try {
     return fs.readFileSync(path.join(__dirname, "..", "VERSION"), "utf8").trim();
   } catch (e) {
-    return "0.6.1";
+    return "0.6.2";
   }
 }
 const VERSION = readVersion();

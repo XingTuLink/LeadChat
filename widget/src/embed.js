@@ -13,9 +13,11 @@
  *      assistant: "support",           // 助手 ID（或 { id: "support" }），省略=默认助手（纯问答）
  *      context: { page: "detail", order_id: "O-123" }, // 宿主业务上下文（扁平键值）
  *      theme: "dark", position: "right", title: "售后助手",
- *      welcome: "你好", icon: "https://.../icon.png"
+ *      welcome: "你好", icon: "https://.../icon.png",
+ *      mode: "fullscreen"                 // 窗口模式："window" 小窗（默认）/ "fullscreen" 全屏
  *    });
  *    // 运行时：LeadChat.setContext({...})、LeadChat.open()、LeadChat.close()
+ *    // LeadChat.setMode("fullscreen")、LeadChat.toggleFullscreen()
  */
 (function boot() {
   var script = document.currentScript;
@@ -59,6 +61,8 @@
     welcome: dataAttr("data-welcome"),
     title: dataAttr("data-title"),
     icon: dataAttr("data-icon"),
+    mode: dataAttr("data-mode") === "fullscreen" ? "fullscreen"
+        : dataAttr("data-mode") === "window" ? "window" : "",
     context: null
   };
 
@@ -89,13 +93,17 @@
     var aid = pickAssistant(o.assistant || o.assistantId);
     if (aid) opts.assistant = aid;
     if (o.context && typeof o.context === "object") opts.context = o.context;
+    if (o.mode === "fullscreen" || o.mode === "window") opts.mode = o.mode;
+    else if (o.fullscreen === true) opts.mode = "fullscreen";
+    else if (o.fullscreen === false) opts.mode = "window";
     ["theme", "position", "welcome", "title", "icon"].forEach(function (k) {
       if (o[k]) opts[k] = o[k];
     });
     if (live) {
-      // 挂件启动后仅 assistant/context 可热更新（外观与 API 地址启动时已定）
+      // 挂件启动后仅 assistant/context/窗口模式可热更新（外观与 API 地址启动时已定）
       LC_STATE.assistantId = opts.assistant || null;
       LC_STATE.context = opts.context || null;
+      if (window.__lc_ui && opts.mode) window.__lc_ui.setMode(opts.mode);
     } else {
       window.__lc_opts = opts;
     }
@@ -107,15 +115,25 @@
   // ---- 对外 Embed API ----
   window.LeadChat = {
     __lcReady: true,
-    version: "0.6.1",
+    version: "0.6.2",
     init: function (o) { applyInit(o, true); },
     setContext: function (ctx) {
       opts.context = ctx && typeof ctx === "object" ? ctx : null;
       LC_STATE.context = opts.context;
     },
     getContext: function () { return LC_STATE.context; },
-    open: function () { if (window.__lc_ui) __lc_ui.openWindow(); },
-    close: function () { if (window.__lc_ui && __lc_ui.ui) __lc_ui.ui.root.style.display = "none"; }
+    // o 可空；传 { fullscreen: true } 或 { mode: "fullscreen" } 直接以全屏打开
+    open: function (o) {
+      if (!window.__lc_ui) return;
+      if (o) {
+        if (o.mode === "fullscreen" || o.mode === "window") __lc_ui.setMode(o.mode);
+        else if (o.fullscreen === true) __lc_ui.setMode("fullscreen");
+      }
+      __lc_ui.openWindow();
+    },
+    close: function () { if (window.__lc_ui) __lc_ui.closeWindow(); },
+    setMode: function (mode) { if (window.__lc_ui) __lc_ui.setMode(mode); },
+    toggleFullscreen: function () { if (window.__lc_ui) __lc_ui.toggleFullscreen(); }
   };
 
   function start() {
